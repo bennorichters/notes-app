@@ -1,0 +1,56 @@
+import { simpleGit } from 'simple-git'
+import { readdir, readFile } from 'fs/promises'
+import { join } from 'path'
+
+const NOTES_DIR = process.env.NOTES_DIR || './notes'
+
+export interface Note {
+  filename: string
+  path: string
+  title: string
+  lastModified: Date
+}
+
+export async function getLastModifiedNote(): Promise<Note | null> {
+  try {
+    const notes = await getAllNotes()
+    return notes.length > 0 ? notes[0] : null
+  } catch (error) {
+    console.error('Error getting last modified note:', error)
+    return null
+  }
+}
+
+export async function getAllNotes(): Promise<Note[]> {
+  try {
+    const files = await readdir(NOTES_DIR)
+    const mdFiles = files.filter(f => f.endsWith('.md'))
+    const git = simpleGit(NOTES_DIR)
+
+    const notes: Note[] = []
+
+    for (const file of mdFiles) {
+      try {
+        const log = await git.log({ file, maxCount: 1 })
+        notes.push({
+          filename: file,
+          path: join(NOTES_DIR, file),
+          title: file.replace('.md', ''),
+          lastModified: log.latest ? new Date(log.latest.date) : new Date()
+        })
+      } catch (error) {
+        notes.push({
+          filename: file,
+          path: join(NOTES_DIR, file),
+          title: file.replace('.md', ''),
+          lastModified: new Date()
+        })
+      }
+    }
+
+    return notes.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+  } catch (error) {
+    console.error('Error getting all notes:', error)
+    return []
+  }
+}

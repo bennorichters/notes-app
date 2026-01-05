@@ -6,6 +6,7 @@ import { compare } from 'bcrypt'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
 import { loginPage, homePage } from './views.js'
+import { getLastModifiedNote } from './notes.js'
 
 type Variables = {
   userId: string
@@ -15,6 +16,7 @@ const app = new Hono<{ Variables: Variables }>()
 
 const USERNAME = process.env.USERNAME || 'admin'
 const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
+const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
 
 app.get('/login', (c) => {
   return c.html(loginPage())
@@ -66,9 +68,18 @@ app.get('/logout', (c) => {
   return c.redirect('/login')
 })
 
-app.get('/', requireAuth, (c) => {
+app.get('/', requireAuth, async (c) => {
   const userId = c.get('userId') as string
-  return c.html(homePage(userId))
+  const lastNote = await getLastModifiedNote()
+
+  return c.html(homePage({
+    username: userId,
+    showAuth: !SKIP_AUTH,
+    lastNote: lastNote ? {
+      title: lastNote.title,
+      lastModified: lastNote.lastModified
+    } : null
+  }))
 })
 
 const port = parseInt(process.env.PORT || '3000')

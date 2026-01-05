@@ -100,7 +100,13 @@ export function loginPage(error?: string) {
   `.trim()
 }
 
-export function homePage(username: string) {
+interface HomePageProps {
+  username: string
+  showAuth: boolean
+  lastNote?: { title: string; lastModified: Date } | null
+}
+
+export function homePage({ username, showAuth, lastNote }: HomePageProps) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -167,13 +173,26 @@ export function homePage(username: string) {
 <body>
   <div class="header">
     <h1>Notes</h1>
+    ${showAuth ? `
     <div class="user-info">
       <span class="username">Logged in as ${username}</span>
       <a href="/logout" class="logout-btn">Logout</a>
     </div>
+    ` : ''}
   </div>
   <div class="content">
-    <p>Welcome to your notes app! Notes functionality coming soon...</p>
+    ${lastNote ? `
+    <h2 style="color: #1e152a; margin-bottom: 0.5rem;">Last Modified Note</h2>
+    <div style="padding: 1rem; background: #f8f8f8; border-radius: 4px;
+                border-left: 4px solid #087e8b;">
+      <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
+        ${lastNote.title}
+      </div>
+      <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+        Modified: ${lastNote.lastModified.toLocaleString()}
+      </div>
+    </div>
+    ` : '<p>No notes found. Create your first note!</p>'}
   </div>
 </body>
 </html>
