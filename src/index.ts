@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { compare } from 'bcrypt'
@@ -13,6 +14,8 @@ type Variables = {
 }
 
 const app = new Hono<{ Variables: Variables }>()
+
+app.use('/*', serveStatic({ root: './public' }))
 
 const USERNAME = process.env.USERNAME || 'admin'
 const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
