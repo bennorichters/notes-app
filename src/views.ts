@@ -104,7 +104,7 @@ export function loginPage(error?: string) {
 interface HomePageProps {
   username: string
   showAuth: boolean
-  lastNotes: { title: string; lastModified: Date }[]
+  lastNotes: { title: string; firstHeader: string; lastModified: Date }[]
 }
 
 export function homePage({ username, showAuth, lastNotes }: HomePageProps) {
@@ -191,10 +191,10 @@ export function homePage({ username, showAuth, lastNotes }: HomePageProps) {
     <div style="padding: 1rem; background: #f8f8f8; border-radius: 4px;
                 border-left: 4px solid #087e8b; margin-bottom: 1rem;">
       <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
-        ${note.title}
+        ${note.firstHeader}
       </div>
       <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-        Modified: ${note.lastModified.toLocaleString()}
+        Modified: ${note.lastModified.toLocaleString()} - ${note.title}.md
       </div>
     </div>
     `).join('')}

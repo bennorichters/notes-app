@@ -80,6 +80,7 @@ app.get('/', requireAuth, async (c) => {
     showAuth: !SKIP_AUTH,
     lastNotes: lastNotes.map(note => ({
       title: note.title,
+      firstHeader: note.firstHeader,
       lastModified: note.lastModified
     }))
   }))

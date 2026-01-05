@@ -4,10 +4,22 @@ import { join } from 'path'
 
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
 
+function extractFirstHeader(content: string): string {
+  const lines = content.split('\n')
+  for (const line of lines) {
+    const trimmed = line.trim()
+    if (trimmed.startsWith('#')) {
+      return trimmed.replace(/^#+\s*/, '')
+    }
+  }
+  return ''
+}
+
 export interface Note {
   filename: string
   path: string
   title: string
+  firstHeader: string
   lastModified: Date
 }
 
@@ -40,19 +52,30 @@ export async function getAllNotes(): Promise<Note[]> {
     const notes: Note[] = []
 
     for (const file of mdFiles) {
+      const filePath = join(NOTES_DIR, file)
+      let firstHeader = ''
+      try {
+        const content = await readFile(filePath, 'utf-8')
+        firstHeader = extractFirstHeader(content)
+      } catch (error) {
+        console.error(`Error reading file ${file}:`, error)
+      }
+
       try {
         const log = await git.log({ file, maxCount: 1 })
         notes.push({
           filename: file,
-          path: join(NOTES_DIR, file),
+          path: filePath,
           title: file.replace('.md', ''),
+          firstHeader: firstHeader || file.replace('.md', ''),
           lastModified: log.latest ? new Date(log.latest.date) : new Date()
         })
       } catch (error) {
         notes.push({
           filename: file,
-          path: join(NOTES_DIR, file),
+          path: filePath,
           title: file.replace('.md', ''),
+          firstHeader: firstHeader || file.replace('.md', ''),
           lastModified: new Date()
         })
       }
