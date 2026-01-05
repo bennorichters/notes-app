@@ -1,5 +1,5 @@
 import { simpleGit } from 'simple-git'
-import { readdir, readFile } from 'fs/promises'
+import { readdir, readFile, stat } from 'fs/promises'
 import { join } from 'path'
 import { marked } from 'marked'
 
@@ -76,6 +76,8 @@ export async function getAllNotes(): Promise<Note[]> {
       const filePath = join(NOTES_DIR, file)
       let firstHeader = ''
       let content = ''
+      let lastModified = new Date()
+
       try {
         content = await readFile(filePath, 'utf-8')
         firstHeader = extractFirstHeader(content)
@@ -85,24 +87,29 @@ export async function getAllNotes(): Promise<Note[]> {
 
       try {
         const log = await git.log({ file, maxCount: 1 })
-        notes.push({
-          filename: file,
-          path: filePath,
-          title: file.replace('.md', ''),
-          firstHeader: firstHeader || file.replace('.md', ''),
-          content,
-          lastModified: log.latest ? new Date(log.latest.date) : new Date()
-        })
+        if (log.latest) {
+          lastModified = new Date(log.latest.date)
+        } else {
+          const stats = await stat(filePath)
+          lastModified = stats.mtime
+        }
       } catch (error) {
-        notes.push({
-          filename: file,
-          path: filePath,
-          title: file.replace('.md', ''),
-          firstHeader: firstHeader || file.replace('.md', ''),
-          content,
-          lastModified: new Date()
-        })
+        try {
+          const stats = await stat(filePath)
+          lastModified = stats.mtime
+        } catch (statError) {
+          console.error(`Error getting file stats for ${file}:`, statError)
+        }
       }
+
+      notes.push({
+        filename: file,
+        path: filePath,
+        title: file.replace('.md', ''),
+        firstHeader: firstHeader || file.replace('.md', ''),
+        content,
+        lastModified
+      })
     }
 
     return notes.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
