@@ -91,9 +91,7 @@ export async function getAllNotes(): Promise<Note[]> {
         const log = await git.log({ file, maxCount: 1 })
         if (log.latest) {
           lastModified = new Date(log.latest.date)
-          console.log(`Git log for ${file}: ${log.latest.date}`)
         } else {
-          console.log(`No git history for ${file}, using filesystem mtime`)
           const stats = await stat(filePath)
           lastModified = stats.mtime
         }
