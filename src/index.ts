@@ -3,9 +3,9 @@ import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { compare } from 'bcrypt'
-import { requireAuth } from './auth'
-import { createSession, deleteSession } from './session'
-import { loginPage, homePage } from './views'
+import { requireAuth } from './auth.js'
+import { createSession, deleteSession } from './session.js'
+import { loginPage, homePage } from './views.js'
 
 const app = new Hono()
 

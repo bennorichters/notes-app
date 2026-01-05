@@ -1,6 +1,6 @@
 import type { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
-import { getSession } from './session'
+import { getSession } from './session.js'
 
 export async function requireAuth(c: Context, next: Next) {
   const sessionId = getCookie(c, 'session')
