@@ -15,7 +15,7 @@ export function loginPage(error?: string) {
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
                    Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f5f5f5;
+      background: #ddd8b8;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -26,18 +26,18 @@ export function loginPage(error?: string) {
       background: white;
       padding: 2rem;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(30,21,42,0.15);
       width: 100%;
       max-width: 400px;
     }
     h1 {
       margin-bottom: 1.5rem;
-      color: #333;
+      color: #1e152a;
       font-size: 1.5rem;
     }
     .error {
-      background: #fee;
-      color: #c33;
+      background: #fce8e2;
+      color: #c44e2f;
       padding: 0.75rem;
       border-radius: 4px;
       margin-bottom: 1rem;
@@ -49,24 +49,24 @@ export function loginPage(error?: string) {
     label {
       display: block;
       margin-bottom: 0.5rem;
-      color: #555;
+      color: #2a2b2a;
       font-size: 0.9rem;
     }
     input {
       width: 100%;
       padding: 0.75rem;
-      border: 1px solid #ddd;
+      border: 1px solid #c9c5ad;
       border-radius: 4px;
       font-size: 1rem;
     }
     input:focus {
       outline: none;
-      border-color: #4CAF50;
+      border-color: #087e8b;
     }
     button {
       width: 100%;
       padding: 0.75rem;
-      background: #4CAF50;
+      background: #087e8b;
       color: white;
       border: none;
       border-radius: 4px;
@@ -75,7 +75,7 @@ export function loginPage(error?: string) {
       margin-top: 0.5rem;
     }
     button:hover {
-      background: #45a049;
+      background: #065f69;
     }
   </style>
 </head>
@@ -117,21 +117,21 @@ export function homePage(username: string) {
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
                    Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: #f5f5f5;
+      background: #ddd8b8;
       padding: 1rem;
     }
     .header {
       background: white;
       padding: 1rem;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(30,21,42,0.15);
       margin-bottom: 1rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     h1 {
-      color: #333;
+      color: #1e152a;
       font-size: 1.5rem;
     }
     .user-info {
@@ -140,12 +140,12 @@ export function homePage(username: string) {
       align-items: center;
     }
     .username {
-      color: #666;
+      color: #2a2b2a;
       font-size: 0.9rem;
     }
     .logout-btn {
       padding: 0.5rem 1rem;
-      background: #f44336;
+      background: #f78154;
       color: white;
       border: none;
       border-radius: 4px;
@@ -154,13 +154,13 @@ export function homePage(username: string) {
       cursor: pointer;
     }
     .logout-btn:hover {
-      background: #da190b;
+      background: #e56840;
     }
     .content {
       background: white;
       padding: 2rem;
       border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(30,21,42,0.15);
     }
   </style>
 </head>
