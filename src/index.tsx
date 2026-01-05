@@ -19,6 +19,8 @@ const app = new Hono<{ Variables: Variables }>()
 
 app.use('/*', serveStatic({ root: './public' }))
 
+app.get('/health', (c) => c.text('OK'))
+
 const USERNAME = process.env.USERNAME || 'admin'
 const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
 const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
