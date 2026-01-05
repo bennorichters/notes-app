@@ -1,8 +1,16 @@
 import { simpleGit } from 'simple-git'
 import { readdir, readFile } from 'fs/promises'
 import { join } from 'path'
+import { marked } from 'marked'
 
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
+
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+  mangle: false,
+  headerIds: false
+})
 
 function extractFirstHeader(content: string): string {
   const lines = content.split('\n')
@@ -15,11 +23,16 @@ function extractFirstHeader(content: string): string {
   return ''
 }
 
+export function renderMarkdown(content: string): string {
+  return marked(content, { async: false }) as string
+}
+
 export interface Note {
   filename: string
   path: string
   title: string
   firstHeader: string
+  content: string
   lastModified: Date
 }
 
@@ -43,6 +56,16 @@ export async function getLastThreeModifiedNotes(): Promise<Note[]> {
   }
 }
 
+export async function getNoteByFilename(filename: string): Promise<Note | null> {
+  try {
+    const notes = await getAllNotes()
+    return notes.find(note => note.title === filename) || null
+  } catch (error) {
+    console.error('Error getting note by filename:', error)
+    return null
+  }
+}
+
 export async function getAllNotes(): Promise<Note[]> {
   try {
     const files = await readdir(NOTES_DIR)
@@ -54,8 +77,9 @@ export async function getAllNotes(): Promise<Note[]> {
     for (const file of mdFiles) {
       const filePath = join(NOTES_DIR, file)
       let firstHeader = ''
+      let content = ''
       try {
-        const content = await readFile(filePath, 'utf-8')
+        content = await readFile(filePath, 'utf-8')
         firstHeader = extractFirstHeader(content)
       } catch (error) {
         console.error(`Error reading file ${file}:`, error)
@@ -68,6 +92,7 @@ export async function getAllNotes(): Promise<Note[]> {
           path: filePath,
           title: file.replace('.md', ''),
           firstHeader: firstHeader || file.replace('.md', ''),
+          content,
           lastModified: log.latest ? new Date(log.latest.date) : new Date()
         })
       } catch (error) {
@@ -76,6 +101,7 @@ export async function getAllNotes(): Promise<Note[]> {
           path: filePath,
           title: file.replace('.md', ''),
           firstHeader: firstHeader || file.replace('.md', ''),
+          content,
           lastModified: new Date()
         })
       }

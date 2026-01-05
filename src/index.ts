@@ -6,8 +6,8 @@ import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { compare } from 'bcrypt'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
-import { loginPage, homePage } from './views.js'
-import { getLastThreeModifiedNotes } from './notes.js'
+import { loginPage, homePage, noteDetailPage } from './views.js'
+import { getLastThreeModifiedNotes, getNoteByFilename, renderMarkdown } from './notes.js'
 
 type Variables = {
   userId: string
@@ -69,6 +69,27 @@ app.get('/logout', (c) => {
 
   deleteCookie(c, 'session')
   return c.redirect('/login')
+})
+
+app.get('/note/:filename', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  const filename = c.req.param('filename')
+  const note = await getNoteByFilename(filename)
+
+  if (!note) {
+    return c.text('Note not found', 404)
+  }
+
+  return c.html(noteDetailPage({
+    username: userId,
+    showAuth: !SKIP_AUTH,
+    note: {
+      title: note.title,
+      firstHeader: note.firstHeader,
+      lastModified: note.lastModified,
+      renderedContent: renderMarkdown(note.content)
+    }
+  }))
 })
 
 app.get('/', requireAuth, async (c) => {
