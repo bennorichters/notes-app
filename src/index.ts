@@ -6,7 +6,7 @@ import { compare } from 'bcrypt'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
 import { loginPage, homePage } from './views.js'
-import { getLastModifiedNote } from './notes.js'
+import { getLastThreeModifiedNotes } from './notes.js'
 
 type Variables = {
   userId: string
@@ -70,15 +70,15 @@ app.get('/logout', (c) => {
 
 app.get('/', requireAuth, async (c) => {
   const userId = c.get('userId') as string
-  const lastNote = await getLastModifiedNote()
+  const lastNotes = await getLastThreeModifiedNotes()
 
   return c.html(homePage({
     username: userId,
     showAuth: !SKIP_AUTH,
-    lastNote: lastNote ? {
-      title: lastNote.title,
-      lastModified: lastNote.lastModified
-    } : null
+    lastNotes: lastNotes.map(note => ({
+      title: note.title,
+      lastModified: note.lastModified
+    }))
   }))
 })
 

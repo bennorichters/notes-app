@@ -103,10 +103,10 @@ export function loginPage(error?: string) {
 interface HomePageProps {
   username: string
   showAuth: boolean
-  lastNote?: { title: string; lastModified: Date } | null
+  lastNotes: { title: string; lastModified: Date }[]
 }
 
-export function homePage({ username, showAuth, lastNote }: HomePageProps) {
+export function homePage({ username, showAuth, lastNotes }: HomePageProps) {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -181,17 +181,21 @@ export function homePage({ username, showAuth, lastNote }: HomePageProps) {
     ` : ''}
   </div>
   <div class="content">
-    ${lastNote ? `
-    <h2 style="color: #1e152a; margin-bottom: 0.5rem;">Last Modified Note</h2>
+    ${lastNotes.length > 0 ? `
+    <h2 style="color: #1e152a; margin-bottom: 1rem;">
+      Last Modified Notes
+    </h2>
+    ${lastNotes.map(note => `
     <div style="padding: 1rem; background: #f8f8f8; border-radius: 4px;
-                border-left: 4px solid #087e8b;">
+                border-left: 4px solid #087e8b; margin-bottom: 1rem;">
       <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
-        ${lastNote.title}
+        ${note.title}
       </div>
       <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-        Modified: ${lastNote.lastModified.toLocaleString()}
+        Modified: ${note.lastModified.toLocaleString()}
       </div>
     </div>
+    `).join('')}
     ` : '<p>No notes found. Create your first note!</p>'}
   </div>
 </body>

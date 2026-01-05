@@ -21,6 +21,16 @@ export async function getLastModifiedNote(): Promise<Note | null> {
   }
 }
 
+export async function getLastThreeModifiedNotes(): Promise<Note[]> {
+  try {
+    const notes = await getAllNotes()
+    return notes.slice(0, 3)
+  } catch (error) {
+    console.error('Error getting last three modified notes:', error)
+    return []
+  }
+}
+
 export async function getAllNotes(): Promise<Note[]> {
   try {
     const files = await readdir(NOTES_DIR)
