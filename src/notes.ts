@@ -68,7 +68,9 @@ export async function getAllNotes(): Promise<Note[]> {
   try {
     const files = await readdir(NOTES_DIR)
     const mdFiles = files.filter(f => f.endsWith('.md'))
-    const git = simpleGit(NOTES_DIR)
+    const git = simpleGit(NOTES_DIR, {
+      config: [`safe.directory=${NOTES_DIR}`]
+    })
 
     const notes: Note[] = []
 
