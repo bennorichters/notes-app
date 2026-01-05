@@ -6,7 +6,9 @@ import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { compare } from 'bcrypt'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
-import { loginPage, homePage, noteDetailPage } from './views.js'
+import { LoginPage } from './views/LoginPage.js'
+import { HomePage } from './views/HomePage.js'
+import { NoteDetailPage } from './views/NoteDetailPage.js'
 import { getLastThreeModifiedNotes, getNoteByFilename, renderMarkdown } from './notes.js'
 
 type Variables = {
@@ -22,7 +24,7 @@ const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
 const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
 
 app.get('/login', (c) => {
-  return c.html(loginPage())
+  return c.html(<LoginPage />)
 })
 
 app.post('/login', async (c) => {
@@ -31,21 +33,21 @@ app.post('/login', async (c) => {
   const password = body.password as string
 
   if (!username || !password) {
-    return c.html(loginPage('Username and password are required'))
+    return c.html(<LoginPage error="Username and password are required" />)
   }
 
   if (username !== USERNAME) {
-    return c.html(loginPage('Invalid username or password'))
+    return c.html(<LoginPage error="Invalid username or password" />)
   }
 
   if (!PASSWORD_HASH) {
-    return c.html(loginPage('Server configuration error'))
+    return c.html(<LoginPage error="Server configuration error" />)
   }
 
   const isValid = await compare(password, PASSWORD_HASH)
 
   if (!isValid) {
-    return c.html(loginPage('Invalid username or password'))
+    return c.html(<LoginPage error="Invalid username or password" />)
   }
 
   const sessionId = createSession(username)
@@ -80,31 +82,35 @@ app.get('/note/:filename', requireAuth, async (c) => {
     return c.text('Note not found', 404)
   }
 
-  return c.html(noteDetailPage({
-    username: userId,
-    showAuth: !SKIP_AUTH,
-    note: {
-      title: note.title,
-      firstHeader: note.firstHeader,
-      lastModified: note.lastModified,
-      renderedContent: renderMarkdown(note.content)
-    }
-  }))
+  return c.html(
+    <NoteDetailPage
+      username={userId}
+      showAuth={!SKIP_AUTH}
+      note={{
+        title: note.title,
+        firstHeader: note.firstHeader,
+        lastModified: note.lastModified,
+        renderedContent: renderMarkdown(note.content)
+      }}
+    />
+  )
 })
 
 app.get('/', requireAuth, async (c) => {
   const userId = c.get('userId') as string
   const lastNotes = await getLastThreeModifiedNotes()
 
-  return c.html(homePage({
-    username: userId,
-    showAuth: !SKIP_AUTH,
-    lastNotes: lastNotes.map(note => ({
-      title: note.title,
-      firstHeader: note.firstHeader,
-      lastModified: note.lastModified
-    }))
-  }))
+  return c.html(
+    <HomePage
+      username={userId}
+      showAuth={!SKIP_AUTH}
+      lastNotes={lastNotes.map((note) => ({
+        title: note.title,
+        firstHeader: note.firstHeader,
+        lastModified: note.lastModified
+      }))}
+    />
+  )
 })
 
 const port = parseInt(process.env.PORT || '3000')
