@@ -7,9 +7,7 @@ const NOTES_DIR = process.env.NOTES_DIR || './notes'
 
 marked.setOptions({
   breaks: true,
-  gfm: true,
-  mangle: false,
-  headerIds: false
+  gfm: true
 })
 
 function extractFirstHeader(content: string): string {
