@@ -7,7 +7,11 @@ import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
 import { loginPage, homePage } from './views.js'
 
-const app = new Hono()
+type Variables = {
+  userId: string
+}
+
+const app = new Hono<{ Variables: Variables }>()
 
 const USERNAME = process.env.USERNAME || 'admin'
 const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
