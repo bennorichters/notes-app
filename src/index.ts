@@ -84,6 +84,6 @@ app.get('/', requireAuth, async (c) => {
 
 const port = parseInt(process.env.PORT || '3000')
 
-serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`Running on http://localhost:${info.port}`)
+serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
+  console.log(`Running on http://0.0.0.0:${info.port}`)
 })
