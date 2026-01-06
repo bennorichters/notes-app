@@ -258,11 +258,22 @@ button:hover {
   font-style: italic;
 }
 
-.search-form {
+.search-and-create {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
   align-items: center;
+  flex: 1;
+}
+
+.create-form {
+  display: flex;
 }
 
 .search-input {
@@ -330,6 +341,10 @@ mark {
 }
 
 @media (max-width: 600px) {
+  .search-and-create {
+    flex-direction: column;
+  }
+
   .search-form {
     flex-wrap: wrap;
   }
@@ -342,6 +357,14 @@ mark {
   .search-button,
   .clear-button {
     flex: 1;
+  }
+
+  .create-form {
+    width: 100%;
+  }
+
+  .create-form button {
+    width: 100%;
   }
 }
 

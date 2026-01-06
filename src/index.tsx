@@ -18,6 +18,7 @@ import {
   renderMarkdown,
   searchNotes,
   updateNote,
+  createNote,
   type NoteSearchResult
 } from './notes.js'
 
@@ -189,6 +190,15 @@ app.post('/note/:filename/edit', requireAuth, async (c) => {
         error={`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`}
       />
     )
+  }
+})
+
+app.post('/note/new', requireAuth, async (c) => {
+  try {
+    const filename = await createNote()
+    return c.redirect(`/note/${filename}`)
+  } catch (error) {
+    return c.text(`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`, 500)
   }
 })
 
