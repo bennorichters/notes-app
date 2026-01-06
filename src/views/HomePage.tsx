@@ -11,31 +11,6 @@ type HomePageProps = {
   searchResults?: NoteSearchResult[]
 }
 
-function highlightText(text: string, indices: readonly [number, number][]): any {
-  if (!indices || indices.length === 0) {
-    return text
-  }
-
-  const parts: any[] = []
-  let lastIndex = 0
-
-  const sortedIndices = [...indices].sort((a, b) => a[0] - b[0])
-
-  for (const [start, end] of sortedIndices) {
-    if (start > lastIndex) {
-      parts.push(text.substring(lastIndex, start))
-    }
-    parts.push(<mark>{text.substring(start, end + 1)}</mark>)
-    lastIndex = end + 1
-  }
-
-  if (lastIndex < text.length) {
-    parts.push(text.substring(lastIndex))
-  }
-
-  return parts
-}
-
 export const HomePage: FC<HomePageProps> = ({
   username,
   showAuth,
@@ -65,56 +40,25 @@ export const HomePage: FC<HomePageProps> = ({
           <>
             <h2 style="color: #1e152a; margin-bottom: 1rem;">Search Results</h2>
             {searchResults.length > 0 ? (
-              searchResults.map((result) => {
-                const titleMatch = result.matches.find(m => m.key === 'title')
-                const headerMatch = result.matches.find(m => m.key === 'firstHeader')
-                const contentMatch = result.matches.find(m => m.key === 'content')
-                const tagsMatch = result.matches.find(m => m.key === 'tags')
-
-                return (
-                  <a href={`/note/${result.note.title}`} class="note-link">
-                    <div class="note-card">
-                      <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
-                        {headerMatch
-                          ? highlightText(result.note.firstHeader, headerMatch.indices)
-                          : result.note.firstHeader}
-                      </div>
-                      <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                        Modified: {result.note.lastModified.toLocaleString()} -{' '}
-                        {titleMatch
-                          ? highlightText(result.note.title, titleMatch.indices)
-                          : result.note.title}.md
-                      </div>
-                      {tagsMatch && result.note.tags.length > 0 && (
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                          Tags: {result.note.tags.map(tag =>
-                            <span class="tag-badge">{tag}</span>
-                          )}
-                        </div>
-                      )}
-                      {contentMatch && (
-                        <div style="font-size: 0.9rem; color: #444; margin-top: 0.5rem;">
-                          ...{(() => {
-                            const snippetStart = Math.max(0, contentMatch.indices[0][0] - 40)
-                            const snippetEnd = Math.min(
-                              contentMatch.value.length,
-                              contentMatch.indices[contentMatch.indices.length - 1][1] + 100
-                            )
-                            const snippet = contentMatch.value.substring(snippetStart, snippetEnd)
-                            const adjustedIndices = contentMatch.indices
-                              .filter(([start, end]) => end >= snippetStart && start < snippetEnd)
-                              .map(([start, end]) => [
-                                Math.max(0, start - snippetStart),
-                                Math.min(snippet.length - 1, end - snippetStart)
-                              ] as [number, number])
-                            return highlightText(snippet, adjustedIndices)
-                          })()}...
-                        </div>
-                      )}
+              searchResults.map((result) => (
+                <a href={`/note/${result.note.title}`} class="note-link">
+                  <div class="note-card">
+                    <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
+                      {result.note.firstHeader}
                     </div>
-                  </a>
-                )
-              })
+                    <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                      Modified: {result.note.lastModified.toLocaleString()} - {result.note.title}.md
+                    </div>
+                    {result.note.tags.length > 0 && (
+                      <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                        Tags: {result.note.tags.map(tag =>
+                          <span class="tag-badge">{tag}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </a>
+              ))
             ) : (
               <p>No results found for "{query}"</p>
             )}
