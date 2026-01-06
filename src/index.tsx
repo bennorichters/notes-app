@@ -109,7 +109,7 @@ app.get('/', requireAuth, async (c) => {
   const query = c.req.query('q') || ''
 
   if (query.trim()) {
-    const searchResults = await searchNotes(query, 20)
+    const searchResults = await searchNotes(query, 5)
     return c.html(
       <HomePage
         username={userId}

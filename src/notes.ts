@@ -168,7 +168,7 @@ export async function searchNotes(
       { name: 'title', weight: 1.5 },
       { name: 'content', weight: 1 }
     ],
-    threshold: 0.4,
+    threshold: 0.2,
     includeScore: true,
     includeMatches: true,
     minMatchCharLength: 2,
