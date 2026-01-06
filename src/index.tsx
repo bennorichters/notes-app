@@ -11,6 +11,7 @@ import { HomePage } from './views/HomePage.js'
 import { NoteDetailPage } from './views/NoteDetailPage.js'
 import {
   getLastThreeModifiedNotes,
+  getPinnedNotes,
   getNoteByFilename,
   renderMarkdown,
   searchNotes,
@@ -120,11 +121,18 @@ app.get('/', requireAuth, async (c) => {
     )
   } else {
     const lastNotes = await getLastThreeModifiedNotes()
+    const pinnedNotes = await getPinnedNotes()
     return c.html(
       <HomePage
         username={userId}
         showAuth={!SKIP_AUTH}
         lastNotes={lastNotes.map((note) => ({
+          title: note.title,
+          firstHeader: note.firstHeader,
+          lastModified: note.lastModified,
+          tags: note.tags
+        }))}
+        pinnedNotes={pinnedNotes.map((note) => ({
           title: note.title,
           firstHeader: note.firstHeader,
           lastModified: note.lastModified,
