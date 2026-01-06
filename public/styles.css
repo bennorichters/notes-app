@@ -280,6 +280,7 @@ button:hover {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   margin-top: 0;
+  border: 1px solid transparent;
 }
 
 .search-input {
@@ -299,7 +300,7 @@ button:hover {
   padding: 0.75rem 1.5rem;
   background: #087e8b;
   color: white;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
