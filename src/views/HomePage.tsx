@@ -6,7 +6,7 @@ import type { NoteSearchResult } from '../notes.js'
 type HomePageProps = {
   username: string
   showAuth: boolean
-  lastNotes?: { title: string; firstHeader: string; lastModified: Date }[]
+  lastNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
   query?: string
   searchResults?: NoteSearchResult[]
 }
@@ -77,6 +77,13 @@ export const HomePage: FC<HomePageProps> = ({
                       <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
                         Modified: {note.lastModified.toLocaleString()} - {note.title}.md
                       </div>
+                      {note.tags.length > 0 && (
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
+                          Tags: {note.tags.map(tag =>
+                            <span class="tag-badge">{tag}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </a>
                 ))}

@@ -127,7 +127,8 @@ app.get('/', requireAuth, async (c) => {
         lastNotes={lastNotes.map((note) => ({
           title: note.title,
           firstHeader: note.firstHeader,
-          lastModified: note.lastModified
+          lastModified: note.lastModified,
+          tags: note.tags
         }))}
       />
     )
