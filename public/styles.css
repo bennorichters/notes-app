@@ -262,7 +262,7 @@ button:hover {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .search-form {
