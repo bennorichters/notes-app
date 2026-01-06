@@ -10,12 +10,14 @@ import { createSession, deleteSession } from './session.js'
 import { LoginPage } from './views/LoginPage.js'
 import { HomePage } from './views/HomePage.js'
 import { NoteDetailPage } from './views/NoteDetailPage.js'
+import { EditNotePage } from './views/EditNotePage.js'
 import {
   getLastThreeModifiedNotes,
   getPinnedNotes,
   getNoteByFilename,
   renderMarkdown,
   searchNotes,
+  updateNote,
   type NoteSearchResult
 } from './notes.js'
 
@@ -118,6 +120,76 @@ app.get('/note/:filename', requireAuth, async (c) => {
       }}
     />
   )
+})
+
+app.get('/note/:filename/edit', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  const filename = c.req.param('filename')
+  const note = await getNoteByFilename(filename)
+
+  if (!note) {
+    return c.text('Note not found', 404)
+  }
+
+  return c.html(
+    <EditNotePage
+      username={userId}
+      showAuth={!SKIP_AUTH}
+      note={{
+        title: note.title,
+        firstHeader: note.firstHeader,
+        content: note.content
+      }}
+    />
+  )
+})
+
+app.post('/note/:filename/edit', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  const filename = c.req.param('filename')
+  const body = await c.req.parseBody()
+  const content = body.content as string
+
+  if (!content || content.trim() === '') {
+    const note = await getNoteByFilename(filename)
+    if (!note) {
+      return c.text('Note not found', 404)
+    }
+    return c.html(
+      <EditNotePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        note={{
+          title: note.title,
+          firstHeader: note.firstHeader,
+          content: note.content
+        }}
+        error="Note content cannot be empty"
+      />
+    )
+  }
+
+  try {
+    await updateNote(filename, content)
+    return c.redirect(`/note/${filename}`)
+  } catch (error) {
+    const note = await getNoteByFilename(filename)
+    if (!note) {
+      return c.text('Note not found', 404)
+    }
+    return c.html(
+      <EditNotePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        note={{
+          title: note.title,
+          firstHeader: note.firstHeader,
+          content: content
+        }}
+        error={`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`}
+      />
+    )
+  }
 })
 
 app.get('/', requireAuth, async (c) => {

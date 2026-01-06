@@ -1,5 +1,5 @@
 import { simpleGit } from 'simple-git'
-import { readdir, readFile, stat } from 'fs/promises'
+import { readdir, readFile, writeFile, stat } from 'fs/promises'
 import { join } from 'path'
 import { marked } from 'marked'
 import Fuse from 'fuse.js'
@@ -202,4 +202,21 @@ export async function searchNotes(
     })),
     score: result.score || 0
   }))
+}
+
+export async function updateNote(filename: string, content: string): Promise<void> {
+  const note = await getNoteByFilename(filename)
+  if (!note) {
+    throw new Error('Note not found')
+  }
+
+  await writeFile(note.path, content, 'utf-8')
+
+  const git = simpleGit(NOTES_DIR, {
+    config: [`safe.directory=${NOTES_DIR}`]
+  })
+
+  await git.add(note.filename)
+  await git.commit(`Update ${filename}`)
+  await git.push()
 }
