@@ -216,7 +216,8 @@ export async function updateNote(filename: string, content: string): Promise<voi
     config: [`safe.directory=${NOTES_DIR}`]
   })
 
-  await git.add(note.filename)
+  const relativePath = note.path.replace(NOTES_DIR + '/', '').replace(NOTES_DIR + '\\', '')
+  await git.add(relativePath)
   await git.commit(`Update ${filename}`)
   await git.push()
 }
