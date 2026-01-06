@@ -272,7 +272,7 @@ button:hover {
   flex: 1;
 }
 
-.new-note-btn {
+.new-note-btn.btn {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   margin-top: 0;
