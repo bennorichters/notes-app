@@ -101,6 +101,47 @@ app.get('/logout', (c) => {
   return c.redirect('/login')
 })
 
+app.get('/note/new', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  return c.html(
+    <NewNotePage
+      username={userId}
+      showAuth={!SKIP_AUTH}
+    />
+  )
+})
+
+app.post('/note/new', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  const body = await c.req.parseBody()
+  const content = body.content as string
+
+  if (!content || content.trim() === '') {
+    return c.html(
+      <NewNotePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        content={content}
+        error="Note content cannot be empty"
+      />
+    )
+  }
+
+  try {
+    const filename = await createNote(content)
+    return c.redirect(`/note/${filename}`)
+  } catch (error) {
+    return c.html(
+      <NewNotePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        content={content}
+        error={`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`}
+      />
+    )
+  }
+})
+
 app.get('/note/:filename', requireAuth, async (c) => {
   const userId = c.get('userId') as string
   const filename = c.req.param('filename')
@@ -189,47 +230,6 @@ app.post('/note/:filename/edit', requireAuth, async (c) => {
           content: content
         }}
         error={`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`}
-      />
-    )
-  }
-})
-
-app.get('/note/new', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  return c.html(
-    <NewNotePage
-      username={userId}
-      showAuth={!SKIP_AUTH}
-    />
-  )
-})
-
-app.post('/note/new', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  const body = await c.req.parseBody()
-  const content = body.content as string
-
-  if (!content || content.trim() === '') {
-    return c.html(
-      <NewNotePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        content={content}
-        error="Note content cannot be empty"
-      />
-    )
-  }
-
-  try {
-    const filename = await createNote(content)
-    return c.redirect(`/note/${filename}`)
-  } catch (error) {
-    return c.html(
-      <NewNotePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        content={content}
-        error={`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`}
       />
     )
   }
