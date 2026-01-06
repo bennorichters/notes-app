@@ -81,8 +81,8 @@ export async function getNoteByFilename(filename: string): Promise<Note | null> 
 
 export async function getAllNotes(): Promise<Note[]> {
   try {
-    const files = await readdir(NOTES_DIR)
-    const mdFiles = files.filter(f => f.endsWith('.md'))
+    const files = await readdir(NOTES_DIR, { recursive: true })
+    const mdFiles = files.filter(f => typeof f === 'string' && f.endsWith('.md'))
     const git = simpleGit(NOTES_DIR, {
       config: [`safe.directory=${NOTES_DIR}`]
     })
@@ -91,6 +91,7 @@ export async function getAllNotes(): Promise<Note[]> {
 
     for (const file of mdFiles) {
       const filePath = join(NOTES_DIR, file)
+      const fileName = file.split('/').pop() || file
       let firstHeader = ''
       let content = ''
       let lastModified = new Date()
@@ -121,10 +122,10 @@ export async function getAllNotes(): Promise<Note[]> {
       }
 
       notes.push({
-        filename: file,
+        filename: fileName,
         path: filePath,
-        title: file.replace('.md', ''),
-        firstHeader: firstHeader || file.replace('.md', ''),
+        title: fileName.replace('.md', ''),
+        firstHeader: firstHeader || fileName.replace('.md', ''),
         content,
         lastModified,
         tags: extractTags(content)
