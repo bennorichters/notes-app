@@ -173,7 +173,8 @@ export async function searchNotes(
     includeMatches: true,
     minMatchCharLength: 2,
     shouldSort: true,
-    ignoreLocation: true
+    ignoreLocation: true,
+    isCaseSensitive: false
   })
 
   const results = fuse.search(query)
