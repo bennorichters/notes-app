@@ -222,7 +222,7 @@ export async function updateNote(filename: string, content: string): Promise<voi
   await git.push()
 }
 
-export async function createNote(): Promise<string> {
+export async function createNote(content: string): Promise<string> {
   const newDir = join(NOTES_DIR, 'new')
 
   try {
@@ -255,7 +255,7 @@ export async function createNote(): Promise<string> {
     }
   }
 
-  await writeFile(filePath, '', 'utf-8')
+  await writeFile(filePath, content, 'utf-8')
 
   const git = simpleGit(NOTES_DIR, {
     config: [`safe.directory=${NOTES_DIR}`]

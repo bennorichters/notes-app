@@ -39,9 +39,7 @@ export const HomePage: FC<HomePageProps> = ({
               <a href="/" class="clear-button">Clear</a>
             )}
           </form>
-          <form method="post" action="/note/new" class="create-form">
-            <button type="submit" class="btn btn-primary">New Note</button>
-          </form>
+          <a href="/note/new" class="btn btn-primary new-note-btn">New Note</a>
         </div>
 
         {searchResults ? (

@@ -11,6 +11,7 @@ import { LoginPage } from './views/LoginPage.js'
 import { HomePage } from './views/HomePage.js'
 import { NoteDetailPage } from './views/NoteDetailPage.js'
 import { EditNotePage } from './views/EditNotePage.js'
+import { NewNotePage } from './views/NewNotePage.js'
 import {
   getLastThreeModifiedNotes,
   getPinnedNotes,
@@ -193,12 +194,44 @@ app.post('/note/:filename/edit', requireAuth, async (c) => {
   }
 })
 
+app.get('/note/new', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  return c.html(
+    <NewNotePage
+      username={userId}
+      showAuth={!SKIP_AUTH}
+    />
+  )
+})
+
 app.post('/note/new', requireAuth, async (c) => {
+  const userId = c.get('userId') as string
+  const body = await c.req.parseBody()
+  const content = body.content as string
+
+  if (!content || content.trim() === '') {
+    return c.html(
+      <NewNotePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        content={content}
+        error="Note content cannot be empty"
+      />
+    )
+  }
+
   try {
-    const filename = await createNote()
+    const filename = await createNote(content)
     return c.redirect(`/note/${filename}`)
   } catch (error) {
-    return c.text(`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`, 500)
+    return c.html(
+      <NewNotePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        content={content}
+        error={`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`}
+      />
+    )
   }
 })
 

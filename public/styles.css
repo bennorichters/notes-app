@@ -272,15 +272,12 @@ button:hover {
   flex: 1;
 }
 
-.create-form {
-  display: flex;
-}
-
-.create-form button {
+.new-note-btn {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   margin-top: 0;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .search-input {
@@ -366,11 +363,7 @@ mark {
     flex: 1;
   }
 
-  .create-form {
-    width: 100%;
-  }
-
-  .create-form button {
+  .new-note-btn {
     width: 100%;
   }
 }
