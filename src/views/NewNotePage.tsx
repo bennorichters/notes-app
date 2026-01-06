@@ -30,6 +30,7 @@ export const NewNotePage: FC<NewNotePageProps> = ({
             name="content"
             class="note-editor"
             required
+            autofocus
           >{content || ''}</textarea>
           <div class="form-actions">
             <button type="submit" class="btn btn-primary">
