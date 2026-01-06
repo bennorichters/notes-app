@@ -12,7 +12,8 @@
 - Each note ends with a colon separated line of tags
 - The app needs full text search and fuzzy search.
 - The app needs to be able to search through tags
-- In memory search is good enough for now
+- There are less than 1000 files
+- The total size of the notes is a few MB.
 - Changing and creating notes need to trigger git commit and push
 - It's single user for now
 - Note editing is with a simple text area for now.
