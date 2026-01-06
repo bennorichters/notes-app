@@ -94,16 +94,21 @@ export const HomePage: FC<HomePageProps> = ({
                       )}
                       {contentMatch && (
                         <div style="font-size: 0.9rem; color: #444; margin-top: 0.5rem;">
-                          ...{highlightText(
-                            contentMatch.value.substring(
-                              Math.max(0, contentMatch.indices[0][0] - 40),
-                              Math.min(contentMatch.value.length, contentMatch.indices[0][1] + 100)
-                            ),
-                            contentMatch.indices.map(([start, end]) => [
-                              Math.max(0, start - Math.max(0, contentMatch.indices[0][0] - 40)),
-                              Math.max(0, end - Math.max(0, contentMatch.indices[0][0] - 40))
-                            ] as [number, number])
-                          )}...
+                          ...{(() => {
+                            const snippetStart = Math.max(0, contentMatch.indices[0][0] - 40)
+                            const snippetEnd = Math.min(
+                              contentMatch.value.length,
+                              contentMatch.indices[contentMatch.indices.length - 1][1] + 100
+                            )
+                            const snippet = contentMatch.value.substring(snippetStart, snippetEnd)
+                            const adjustedIndices = contentMatch.indices
+                              .filter(([start, end]) => end >= snippetStart && start < snippetEnd)
+                              .map(([start, end]) => [
+                                Math.max(0, start - snippetStart),
+                                Math.min(snippet.length - 1, end - snippetStart)
+                              ] as [number, number])
+                            return highlightText(snippet, adjustedIndices)
+                          })()}...
                         </div>
                       )}
                     </div>
