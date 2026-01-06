@@ -9,7 +9,7 @@
 - There are max a few thousand files
 - Each file is a separate note
 - Each note is written in Markdown
-- Each note ends with a colon separated line of tags
+- Most notes end with a colon separated line of tags, i.e., :tag1:tag2:tag3:
 - The app needs full text search and fuzzy search.
 - The app needs to be able to search through tags
 - There are less than 1000 files
