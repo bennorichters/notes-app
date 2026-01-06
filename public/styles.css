@@ -407,6 +407,10 @@ mark {
   gap: 0.5rem;
 }
 
+.form-actions button {
+  width: auto;
+}
+
 .error-message {
   background: #fce8e2;
   color: #c44e2f;
