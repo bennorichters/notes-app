@@ -2,6 +2,7 @@ import { simpleGit } from 'simple-git'
 import { readdir, readFile, stat } from 'fs/promises'
 import { join } from 'path'
 import { marked } from 'marked'
+import Fuse from 'fuse.js'
 
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
 
@@ -21,6 +22,19 @@ function extractFirstHeader(content: string): string {
   return ''
 }
 
+function extractTags(content: string): string[] {
+  const lines = content.split('\n')
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim()
+    if (trimmed === '') continue
+    if (trimmed.startsWith(':') && trimmed.endsWith(':')) {
+      return trimmed.split(':').filter(tag => tag.length > 0)
+    }
+    break
+  }
+  return []
+}
+
 export function renderMarkdown(content: string): string {
   return marked(content, { async: false }) as string
 }
@@ -32,6 +46,7 @@ export interface Note {
   firstHeader: string
   content: string
   lastModified: Date
+  tags: string[]
 }
 
 export async function getLastModifiedNote(): Promise<Note | null> {
@@ -111,7 +126,8 @@ export async function getAllNotes(): Promise<Note[]> {
         title: file.replace('.md', ''),
         firstHeader: firstHeader || file.replace('.md', ''),
         content,
-        lastModified
+        lastModified,
+        tags: extractTags(content)
       })
     }
 
@@ -120,4 +136,54 @@ export async function getAllNotes(): Promise<Note[]> {
     console.error('Error getting all notes:', error)
     return []
   }
+}
+
+export interface SearchMatch {
+  indices: readonly [number, number][]
+  value: string
+  key?: string
+}
+
+export interface NoteSearchResult {
+  note: Note
+  matches: SearchMatch[]
+  score: number
+}
+
+export async function searchNotes(
+  query: string,
+  limit: number = 5
+): Promise<NoteSearchResult[]> {
+  if (!query || query.trim() === '') {
+    return []
+  }
+
+  const notes = await getAllNotes()
+
+  const fuse = new Fuse(notes, {
+    keys: [
+      { name: 'tags', weight: 3 },
+      { name: 'firstHeader', weight: 2 },
+      { name: 'title', weight: 1.5 },
+      { name: 'content', weight: 1 }
+    ],
+    threshold: 0.4,
+    includeScore: true,
+    includeMatches: true,
+    minMatchCharLength: 2,
+    shouldSort: true,
+    ignoreLocation: true
+  })
+
+  const results = fuse.search(query)
+
+  return results.slice(0, limit).map(result => ({
+    note: result.item,
+    matches: (result.matches || []).map(match => ({
+      indices: match.indices || [],
+      value: match.value || '',
+      key: match.key
+    })),
+    score: result.score || 0
+  }))
 }

@@ -9,7 +9,13 @@ import { createSession, deleteSession } from './session.js'
 import { LoginPage } from './views/LoginPage.js'
 import { HomePage } from './views/HomePage.js'
 import { NoteDetailPage } from './views/NoteDetailPage.js'
-import { getLastThreeModifiedNotes, getNoteByFilename, renderMarkdown } from './notes.js'
+import {
+  getLastThreeModifiedNotes,
+  getNoteByFilename,
+  renderMarkdown,
+  searchNotes,
+  type NoteSearchResult
+} from './notes.js'
 
 type Variables = {
   userId: string
@@ -100,19 +106,32 @@ app.get('/note/:filename', requireAuth, async (c) => {
 
 app.get('/', requireAuth, async (c) => {
   const userId = c.get('userId') as string
-  const lastNotes = await getLastThreeModifiedNotes()
+  const query = c.req.query('q') || ''
 
-  return c.html(
-    <HomePage
-      username={userId}
-      showAuth={!SKIP_AUTH}
-      lastNotes={lastNotes.map((note) => ({
-        title: note.title,
-        firstHeader: note.firstHeader,
-        lastModified: note.lastModified
-      }))}
-    />
-  )
+  if (query.trim()) {
+    const searchResults = await searchNotes(query, 5)
+    return c.html(
+      <HomePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        query={query}
+        searchResults={searchResults}
+      />
+    )
+  } else {
+    const lastNotes = await getLastThreeModifiedNotes()
+    return c.html(
+      <HomePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        lastNotes={lastNotes.map((note) => ({
+          title: note.title,
+          firstHeader: note.firstHeader,
+          lastModified: note.lastModified
+        }))}
+      />
+    )
+  }
 })
 
 const port = parseInt(process.env.PORT || '3000')
