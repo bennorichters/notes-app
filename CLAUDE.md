@@ -6,7 +6,6 @@
 - It's mobile friendly and usable on a desktop
 - Login with user name password
 - Has MFA 
-- There are max a few thousand files
 - Each file is a separate note
 - Each note is written in Markdown
 - Most notes end with a colon separated line of tags, i.e., :tag1:tag2:tag3:
