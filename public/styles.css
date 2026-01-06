@@ -422,12 +422,4 @@ mark {
     align-items: flex-start;
     gap: 0.5rem;
   }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .form-actions .btn {
-    width: 100%;
-  }
 }

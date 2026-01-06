@@ -39,9 +39,6 @@ export const EditNotePage: FC<EditNotePageProps> = ({
             <button type="submit" class="btn btn-primary">
               Save Changes
             </button>
-            <a href={`/note/${note.title}`} class="btn btn-secondary">
-              Cancel
-            </a>
           </div>
         </form>
       </div>
