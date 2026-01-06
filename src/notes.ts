@@ -47,6 +47,7 @@ export interface Note {
   content: string
   lastModified: Date
   tags: string[]
+  isPinned: boolean
 }
 
 export async function getLastModifiedNote(): Promise<Note | null> {
@@ -65,6 +66,17 @@ export async function getLastThreeModifiedNotes(): Promise<Note[]> {
     return notes.slice(0, 3)
   } catch (error) {
     console.error('Error getting last three modified notes:', error)
+    return []
+  }
+}
+
+export async function getPinnedNotes(): Promise<Note[]> {
+  try {
+    const notes = await getAllNotes()
+    const pinnedNotes = notes.filter(note => note.isPinned)
+    return pinnedNotes.sort((a, b) => a.title.localeCompare(b.title))
+  } catch (error) {
+    console.error('Error getting pinned notes:', error)
     return []
   }
 }
@@ -121,6 +133,7 @@ export async function getAllNotes(): Promise<Note[]> {
         }
       }
 
+      const tags = extractTags(content)
       notes.push({
         filename: fileName,
         path: filePath,
@@ -128,7 +141,8 @@ export async function getAllNotes(): Promise<Note[]> {
         firstHeader: firstHeader || fileName.replace('.md', ''),
         content,
         lastModified,
-        tags: extractTags(content)
+        tags,
+        isPinned: tags.includes('pinned')
       })
     }
 

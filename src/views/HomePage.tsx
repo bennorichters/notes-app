@@ -8,6 +8,7 @@ type HomePageProps = {
   username: string
   showAuth: boolean
   lastNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
+  pinnedNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
   query?: string
   searchResults?: NoteSearchResult[]
 }
@@ -16,6 +17,7 @@ export const HomePage: FC<HomePageProps> = ({
   username,
   showAuth,
   lastNotes,
+  pinnedNotes,
   query,
   searchResults
 }) => {
@@ -55,6 +57,19 @@ export const HomePage: FC<HomePageProps> = ({
           </>
         ) : (
           <>
+            {pinnedNotes && pinnedNotes.length > 0 && (
+              <>
+                <h2 style="color: #1e152a; margin-bottom: 1rem;">Pinned Notes</h2>
+                {pinnedNotes.map((note) => (
+                  <NoteCard
+                    title={note.title}
+                    firstHeader={note.firstHeader}
+                    lastModified={note.lastModified}
+                    tags={note.tags}
+                  />
+                ))}
+              </>
+            )}
             {lastNotes && lastNotes.length > 0 ? (
               <>
                 <h2 style="color: #1e152a; margin-bottom: 1rem;">Last Modified Notes</h2>
