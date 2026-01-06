@@ -4,6 +4,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
 import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { compare } from 'bcrypt'
+import { authenticator } from 'otplib'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
 import { LoginPage } from './views/LoginPage.js'
@@ -30,6 +31,7 @@ app.get('/health', (c) => c.text('OK'))
 
 const USERNAME = process.env.USERNAME || 'admin'
 const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
+const TOTP_SECRET = process.env.TOTP_SECRET || ''
 const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
 
 app.get('/login', (c) => {
@@ -40,13 +42,14 @@ app.post('/login', async (c) => {
   const body = await c.req.parseBody()
   const username = body.username as string
   const password = body.password as string
+  const totp = body.totp as string
 
-  if (!username || !password) {
-    return c.html(<LoginPage error="Username and password are required" />)
+  if (!username || !password || !totp) {
+    return c.html(<LoginPage error="All fields are required" />)
   }
 
   if (username !== USERNAME) {
-    return c.html(<LoginPage error="Invalid username or password" />)
+    return c.html(<LoginPage error="Invalid credentials" />)
   }
 
   if (!PASSWORD_HASH) {
@@ -56,7 +59,19 @@ app.post('/login', async (c) => {
   const isValid = await compare(password, PASSWORD_HASH)
 
   if (!isValid) {
-    return c.html(<LoginPage error="Invalid username or password" />)
+    return c.html(<LoginPage error="Invalid credentials" />)
+  }
+
+  if (!SKIP_AUTH) {
+    if (!TOTP_SECRET) {
+      return c.html(<LoginPage error="Server configuration error" />)
+    }
+
+    const isTotpValid = authenticator.verify({ token: totp, secret: TOTP_SECRET })
+
+    if (!isTotpValid) {
+      return c.html(<LoginPage error="Invalid credentials" />)
+    }
   }
 
   const sessionId = createSession(username)

@@ -20,6 +20,20 @@ export const LoginPage: FC<LoginPageProps> = ({ error }) => {
             <label for="password">Password</label>
             <input type="password" id="password" name="password" required />
           </div>
+          <div class="form-group">
+            <label for="totp">Authenticator Code</label>
+            <input
+              type="text"
+              id="totp"
+              name="totp"
+              required
+              pattern="[0-9]{6}"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength={6}
+              placeholder="000000"
+            />
+          </div>
           <button type="submit">Login</button>
         </form>
       </div>
