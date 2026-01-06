@@ -25,19 +25,22 @@ export const HomePage: FC<HomePageProps> = ({
     <Layout title="Notes">
       <Header username={username} showAuth={showAuth} />
       <div class="content">
-        <form method="get" action="/" class="search-form">
-          <input
-            type="text"
-            name="q"
-            placeholder="Search notes, tags..."
-            value={query || ''}
-            class="search-input"
-          />
-          <button type="submit" class="search-button">Search</button>
-          {query && (
-            <a href="/" class="clear-button">Clear</a>
-          )}
-        </form>
+        <div class="search-and-create">
+          <form method="get" action="/" class="search-form">
+            <input
+              type="text"
+              name="q"
+              placeholder="Search notes, tags..."
+              value={query || ''}
+              class="search-input"
+            />
+            <button type="submit" class="search-button">Search</button>
+            {query && (
+              <a href="/" class="clear-button">Clear</a>
+            )}
+          </form>
+          <a href="/note/new" class="btn btn-primary new-note-btn">New Note</a>
+        </div>
 
         {searchResults ? (
           <>

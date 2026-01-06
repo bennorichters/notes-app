@@ -258,11 +258,26 @@ button:hover {
   font-style: italic;
 }
 
-.search-form {
+.search-and-create {
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  align-items: flex-end;
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
   align-items: center;
+  flex: 1;
+}
+
+.new-note-btn.btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  margin-top: 0;
+  border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .search-input {
@@ -282,7 +297,7 @@ button:hover {
   padding: 0.75rem 1.5rem;
   background: #087e8b;
   color: white;
-  border: none;
+  border: 1px solid transparent;
   border-radius: 4px;
   font-size: 1rem;
   cursor: pointer;
@@ -330,6 +345,10 @@ mark {
 }
 
 @media (max-width: 600px) {
+  .search-and-create {
+    flex-direction: column;
+  }
+
   .search-form {
     flex-wrap: wrap;
   }
@@ -342,5 +361,92 @@ mark {
   .search-button,
   .clear-button {
     flex: 1;
+  }
+
+  .new-note-btn {
+    width: 100%;
+  }
+}
+
+.note-header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #087e8b;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #065f69;
+}
+
+.btn-secondary {
+  background: #c9c5ad;
+  color: #2a2b2a;
+}
+
+.btn-secondary:hover {
+  background: #b5b19a;
+}
+
+.edit-form {
+  margin-top: 1rem;
+}
+
+.note-editor {
+  width: 100%;
+  min-height: 400px;
+  padding: 1rem;
+  border: 1px solid #c9c5ad;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.note-editor:focus {
+  outline: none;
+  border-color: #087e8b;
+}
+
+.form-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-actions button {
+  width: auto;
+}
+
+.error-message {
+  background: #fce8e2;
+  color: #c44e2f;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .note-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }

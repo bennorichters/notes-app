@@ -1,5 +1,5 @@
 import { simpleGit } from 'simple-git'
-import { readdir, readFile, stat } from 'fs/promises'
+import { readdir, readFile, writeFile, stat, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { marked } from 'marked'
 import Fuse from 'fuse.js'
@@ -202,4 +202,68 @@ export async function searchNotes(
     })),
     score: result.score || 0
   }))
+}
+
+export async function updateNote(filename: string, content: string): Promise<void> {
+  const note = await getNoteByFilename(filename)
+  if (!note) {
+    throw new Error('Note not found')
+  }
+
+  await writeFile(note.path, content, 'utf-8')
+
+  const git = simpleGit(NOTES_DIR, {
+    config: [`safe.directory=${NOTES_DIR}`]
+  })
+
+  const relativePath = note.path.replace(NOTES_DIR + '/', '').replace(NOTES_DIR + '\\', '')
+  await git.add(relativePath)
+  await git.commit(`Update ${filename}`)
+  await git.push()
+}
+
+export async function createNote(content: string): Promise<string> {
+  const newDir = join(NOTES_DIR, 'new')
+
+  try {
+    await mkdir(newDir, { recursive: true })
+  } catch (error) {
+    console.error('Error creating new directory:', error)
+  }
+
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  const hours = String(now.getHours()).padStart(2, '0')
+  const minutes = String(now.getMinutes()).padStart(2, '0')
+  const seconds = String(now.getSeconds()).padStart(2, '0')
+
+  let baseFilename = `${year}-${month}-${day}_${hours}:${minutes}:${seconds}`
+  let filename = `${baseFilename}.md`
+  let filePath = join(newDir, filename)
+  let counter = 2
+
+  while (true) {
+    try {
+      await stat(filePath)
+      filename = `${baseFilename}_${counter}.md`
+      filePath = join(newDir, filename)
+      counter++
+    } catch {
+      break
+    }
+  }
+
+  await writeFile(filePath, content, 'utf-8')
+
+  const git = simpleGit(NOTES_DIR, {
+    config: [`safe.directory=${NOTES_DIR}`]
+  })
+
+  await git.add(`new/${filename}`)
+  await git.commit(`Create ${filename}`)
+  await git.push()
+
+  return filename.replace('.md', '')
 }

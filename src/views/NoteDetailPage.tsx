@@ -17,9 +17,14 @@ export const NoteDetailPage: FC<NoteDetailPageProps> = ({ username, showAuth, no
   return (
     <Layout title={`${note.firstHeader} - Notes`}>
       <Header username={username} showAuth={showAuth} />
-      <a href="/" class="back-link">
-        ← Back to Notes
-      </a>
+      <div class="note-header-actions">
+        <a href="/" class="back-link">
+          ← Back to Notes
+        </a>
+        <a href={`/note/${note.title}/edit`} class="btn btn-primary">
+          Edit
+        </a>
+      </div>
       <div class="content">
         <div class="note-meta">
           Modified: {note.lastModified.toLocaleString()} - {note.title}.md
