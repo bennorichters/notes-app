@@ -1,6 +1,7 @@
 import type { FC } from 'hono/jsx'
 import { Layout } from '../components/Layout.js'
 import { Header } from '../components/Header.js'
+import { NoteCard } from '../components/NoteCard.js'
 import type { NoteSearchResult } from '../notes.js'
 
 type HomePageProps = {
@@ -41,23 +42,12 @@ export const HomePage: FC<HomePageProps> = ({
             <h2 style="color: #1e152a; margin-bottom: 1rem;">Search Results</h2>
             {searchResults.length > 0 ? (
               searchResults.map((result) => (
-                <a href={`/note/${result.note.title}`} class="note-link">
-                  <div class="note-card">
-                    <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
-                      {result.note.firstHeader}
-                    </div>
-                    <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                      Modified: {result.note.lastModified.toLocaleString()} - {result.note.title}.md
-                    </div>
-                    {result.note.tags.length > 0 && (
-                      <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                        Tags: {result.note.tags.map(tag =>
-                          <span class="tag-badge">{tag}</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </a>
+                <NoteCard
+                  title={result.note.title}
+                  firstHeader={result.note.firstHeader}
+                  lastModified={result.note.lastModified}
+                  tags={result.note.tags}
+                />
               ))
             ) : (
               <p>No results found for "{query}"</p>
@@ -69,23 +59,12 @@ export const HomePage: FC<HomePageProps> = ({
               <>
                 <h2 style="color: #1e152a; margin-bottom: 1rem;">Last Modified Notes</h2>
                 {lastNotes.map((note) => (
-                  <a href={`/note/${note.title}`} class="note-link">
-                    <div class="note-card">
-                      <div style="font-size: 1.1rem; color: #2a2b2a; font-weight: 500;">
-                        {note.firstHeader}
-                      </div>
-                      <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                        Modified: {note.lastModified.toLocaleString()} - {note.title}.md
-                      </div>
-                      {note.tags.length > 0 && (
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 0.5rem;">
-                          Tags: {note.tags.map(tag =>
-                            <span class="tag-badge">{tag}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </a>
+                  <NoteCard
+                    title={note.title}
+                    firstHeader={note.firstHeader}
+                    lastModified={note.lastModified}
+                    tags={note.tags}
+                  />
                 ))}
               </>
             ) : (
