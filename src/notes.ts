@@ -1,48 +1,17 @@
-import { simpleGit } from 'simple-git'
 import { readdir, readFile, writeFile, stat, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { marked } from 'marked'
-import Fuse from 'fuse.js'
+import { join, relative } from 'path'
+import { getGit, queueCommitAndPush } from './git.js'
+import { extractFirstHeader, extractTags, renderMarkdown } from './markdown.js'
 
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
+const LAST_MODIFIED_NOTES_COUNT = 3
+const CACHE_TTL_MS = 30 * 1000
 
-marked.setOptions({
-  breaks: true,
-  gfm: true
-})
-
-function extractFirstHeader(content: string): string {
-  const lines = content.split('\n')
-  for (const line of lines) {
-    const trimmed = line.trim()
-    if (trimmed.startsWith('#')) {
-      return trimmed.replace(/^#+\s*/, '')
-    }
-  }
-  return ''
-}
-
-function extractTags(content: string): string[] {
-  const lines = content.split('\n')
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const trimmed = lines[i].trim()
-    if (trimmed === '') continue
-    if (trimmed.startsWith(':') && trimmed.endsWith(':')) {
-      return trimmed.split(':').filter(tag => tag.length > 0)
-    }
-    break
-  }
-  return []
-}
-
-export function renderMarkdown(content: string): string {
-  return marked(content, { async: false }) as string
-}
+export { renderMarkdown }
 
 export interface Note {
   filename: string
   path: string
-  title: string
   firstHeader: string
   content: string
   lastModified: Date
@@ -50,22 +19,28 @@ export interface Note {
   isPinned: boolean
 }
 
-export async function getLastModifiedNote(): Promise<Note | null> {
-  try {
-    const notes = await getAllNotes()
-    return notes.length > 0 ? notes[0] : null
-  } catch (error) {
-    console.error('Error getting last modified note:', error)
-    return null
-  }
+interface NotesCache {
+  notes: Note[]
+  timestamp: number
+}
+
+let cache: NotesCache | null = null
+
+function isCacheValid(): boolean {
+  if (!cache) return false
+  return Date.now() - cache.timestamp < CACHE_TTL_MS
+}
+
+function invalidateCache(): void {
+  cache = null
 }
 
 export async function getLastThreeModifiedNotes(): Promise<Note[]> {
   try {
     const notes = await getAllNotes()
-    return notes.slice(0, 3)
+    return notes.slice(0, LAST_MODIFIED_NOTES_COUNT)
   } catch (error) {
-    console.error('Error getting last three modified notes:', error)
+    console.error(`Error getting last ${LAST_MODIFIED_NOTES_COUNT} modified notes from ${NOTES_DIR}:`, error)
     return []
   }
 }
@@ -74,9 +49,9 @@ export async function getPinnedNotes(): Promise<Note[]> {
   try {
     const notes = await getAllNotes()
     const pinnedNotes = notes.filter(note => note.isPinned)
-    return pinnedNotes.sort((a, b) => a.title.localeCompare(b.title))
+    return pinnedNotes.sort((a, b) => a.filename.localeCompare(b.filename))
   } catch (error) {
-    console.error('Error getting pinned notes:', error)
+    console.error(`Error getting pinned notes from ${NOTES_DIR}:`, error)
     return []
   }
 }
@@ -84,20 +59,22 @@ export async function getPinnedNotes(): Promise<Note[]> {
 export async function getNoteByFilename(filename: string): Promise<Note | null> {
   try {
     const notes = await getAllNotes()
-    return notes.find(note => note.title === filename) || null
+    return notes.find(note => note.filename === filename) || null
   } catch (error) {
-    console.error('Error getting note by filename:', error)
+    console.error(`Error getting note by filename "${filename}" from ${NOTES_DIR}:`, error)
     return null
   }
 }
 
 export async function getAllNotes(): Promise<Note[]> {
+  if (isCacheValid() && cache) {
+    return cache.notes
+  }
+
   try {
     const files = await readdir(NOTES_DIR, { recursive: true })
     const mdFiles = files.filter(f => typeof f === 'string' && f.endsWith('.md'))
-    const git = simpleGit(NOTES_DIR, {
-      config: [`safe.directory=${NOTES_DIR}`]
-    })
+    const git = getGit()
 
     const notes: Note[] = []
 
@@ -112,7 +89,7 @@ export async function getAllNotes(): Promise<Note[]> {
         content = await readFile(filePath, 'utf-8')
         firstHeader = extractFirstHeader(content)
       } catch (error) {
-        console.error(`Error reading file ${file}:`, error)
+        console.error(`Error reading file "${file}" from ${NOTES_DIR}:`, error)
       }
 
       try {
@@ -124,21 +101,22 @@ export async function getAllNotes(): Promise<Note[]> {
           lastModified = stats.mtime
         }
       } catch (error) {
-        console.error(`Git log failed for ${file}:`, error)
+        console.error(`Git log failed for "${file}" in ${NOTES_DIR}:`, error)
         try {
           const stats = await stat(filePath)
           lastModified = stats.mtime
         } catch (statError) {
-          console.error(`Error getting file stats for ${file}:`, statError)
+          console.error(`Error getting file stats for "${file}" in ${NOTES_DIR}:`, statError)
         }
       }
 
       const tags = extractTags(content)
+      const filename = fileName.replace('.md', '')
+
       notes.push({
-        filename: fileName,
+        filename,
         path: filePath,
-        title: fileName.replace('.md', ''),
-        firstHeader: firstHeader || fileName.replace('.md', ''),
+        firstHeader: firstHeader || filename,
         content,
         lastModified,
         tags,
@@ -146,80 +124,31 @@ export async function getAllNotes(): Promise<Note[]> {
       })
     }
 
-    return notes.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+    const sortedNotes = notes.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime())
+
+    cache = {
+      notes: sortedNotes,
+      timestamp: Date.now()
+    }
+
+    return sortedNotes
   } catch (error) {
-    console.error('Error getting all notes:', error)
+    console.error(`Error getting all notes from ${NOTES_DIR}:`, error)
     return []
   }
-}
-
-export interface SearchMatch {
-  indices: readonly [number, number][]
-  value: string
-  key?: string
-}
-
-export interface NoteSearchResult {
-  note: Note
-  matches: SearchMatch[]
-  score: number
-}
-
-export async function searchNotes(
-  query: string,
-  limit: number = 5
-): Promise<NoteSearchResult[]> {
-  if (!query || query.trim() === '') {
-    return []
-  }
-
-  const notes = await getAllNotes()
-
-  const fuse = new Fuse(notes, {
-    keys: [
-      { name: 'tags', weight: 3 },
-      { name: 'firstHeader', weight: 2 },
-      { name: 'title', weight: 1.5 },
-      { name: 'content', weight: 1 }
-    ],
-    threshold: 0.2,
-    includeScore: true,
-    includeMatches: true,
-    minMatchCharLength: 2,
-    shouldSort: true,
-    ignoreLocation: true,
-    isCaseSensitive: false
-  })
-
-  const results = fuse.search(query)
-
-  return results.slice(0, limit).map(result => ({
-    note: result.item,
-    matches: (result.matches || []).map(match => ({
-      indices: match.indices || [],
-      value: match.value || '',
-      key: match.key
-    })),
-    score: result.score || 0
-  }))
 }
 
 export async function updateNote(filename: string, content: string): Promise<void> {
   const note = await getNoteByFilename(filename)
   if (!note) {
-    throw new Error('Note not found')
+    throw new Error(`Note not found: ${filename}`)
   }
 
   await writeFile(note.path, content, 'utf-8')
+  invalidateCache()
 
-  const git = simpleGit(NOTES_DIR, {
-    config: [`safe.directory=${NOTES_DIR}`]
-  })
-
-  const relativePath = note.path.replace(NOTES_DIR + '/', '').replace(NOTES_DIR + '\\', '')
-  await git.add(relativePath)
-  await git.commit(`Update ${filename}`)
-  await git.push()
+  const relativePath = relative(NOTES_DIR, note.path)
+  queueCommitAndPush(relativePath, `Update ${filename}`)
 }
 
 export async function createNote(content: string): Promise<string> {
@@ -228,7 +157,7 @@ export async function createNote(content: string): Promise<string> {
   try {
     await mkdir(newDir, { recursive: true })
   } catch (error) {
-    console.error('Error creating new directory:', error)
+    console.error(`Error creating new directory in ${NOTES_DIR}:`, error)
   }
 
   const now = new Date()
@@ -239,7 +168,7 @@ export async function createNote(content: string): Promise<string> {
   const minutes = String(now.getMinutes()).padStart(2, '0')
   const seconds = String(now.getSeconds()).padStart(2, '0')
 
-  let baseFilename = `${year}-${month}-${day}_${hours}:${minutes}:${seconds}`
+  const baseFilename = `${year}-${month}-${day}_${hours}:${minutes}:${seconds}`
   let filename = `${baseFilename}.md`
   let filePath = join(newDir, filename)
   let counter = 2
@@ -256,14 +185,9 @@ export async function createNote(content: string): Promise<string> {
   }
 
   await writeFile(filePath, content, 'utf-8')
+  invalidateCache()
 
-  const git = simpleGit(NOTES_DIR, {
-    config: [`safe.directory=${NOTES_DIR}`]
-  })
-
-  await git.add(`new/${filename}`)
-  await git.commit(`Create ${filename}`)
-  await git.push()
+  queueCommitAndPush(`new/${filename}`, `Create ${filename}`)
 
   return filename.replace('.md', '')
 }

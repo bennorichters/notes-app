@@ -13,18 +13,38 @@ import { NoteDetailPage } from './views/NoteDetailPage.js'
 import { EditNotePage } from './views/EditNotePage.js'
 import { NewNotePage } from './views/NewNotePage.js'
 import {
+  getAllNotes,
   getLastThreeModifiedNotes,
   getPinnedNotes,
   getNoteByFilename,
   renderMarkdown,
-  searchNotes,
   updateNote,
   createNote,
-  type NoteSearchResult
+  type Note
 } from './notes.js'
+import { searchNotes, type NoteSearchResult } from './search.js'
 
 type Variables = {
   userId: string
+}
+
+const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+const SEARCH_RESULTS_LIMIT = 5
+
+type NoteCardData = {
+  title: string
+  firstHeader: string
+  lastModified: Date
+  tags: string[]
+}
+
+function toNoteCardData(note: Note): NoteCardData {
+  return {
+    title: note.filename,
+    firstHeader: note.firstHeader,
+    lastModified: note.lastModified,
+    tags: note.tags
+  }
 }
 
 const app = new Hono<{ Variables: Variables }>()
@@ -84,7 +104,7 @@ app.post('/login', async (c) => {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'Lax',
-    maxAge: 7 * 24 * 60 * 60
+    maxAge: SESSION_MAX_AGE_SECONDS
   })
 
   return c.redirect('/')
@@ -156,7 +176,7 @@ app.get('/note/:filename', requireAuth, async (c) => {
       username={userId}
       showAuth={!SKIP_AUTH}
       note={{
-        title: note.title,
+        title: note.filename,
         firstHeader: note.firstHeader,
         lastModified: note.lastModified,
         renderedContent: renderMarkdown(note.content)
@@ -179,7 +199,7 @@ app.get('/note/:filename/edit', requireAuth, async (c) => {
       username={userId}
       showAuth={!SKIP_AUTH}
       note={{
-        title: note.title,
+        title: note.filename,
         firstHeader: note.firstHeader,
         content: note.content
       }}
@@ -203,7 +223,7 @@ app.post('/note/:filename/edit', requireAuth, async (c) => {
         username={userId}
         showAuth={!SKIP_AUTH}
         note={{
-          title: note.title,
+          title: note.filename,
           firstHeader: note.firstHeader,
           content: note.content
         }}
@@ -225,7 +245,7 @@ app.post('/note/:filename/edit', requireAuth, async (c) => {
         username={userId}
         showAuth={!SKIP_AUTH}
         note={{
-          title: note.title,
+          title: note.filename,
           firstHeader: note.firstHeader,
           content: content
         }}
@@ -240,7 +260,8 @@ app.get('/', requireAuth, async (c) => {
   const query = c.req.query('q') || ''
 
   if (query.trim()) {
-    const searchResults = await searchNotes(query, 5)
+    const allNotes = await getAllNotes()
+    const searchResults = searchNotes(allNotes, query, SEARCH_RESULTS_LIMIT)
     return c.html(
       <HomePage
         username={userId}
@@ -256,18 +277,8 @@ app.get('/', requireAuth, async (c) => {
       <HomePage
         username={userId}
         showAuth={!SKIP_AUTH}
-        lastNotes={lastNotes.map((note) => ({
-          title: note.title,
-          firstHeader: note.firstHeader,
-          lastModified: note.lastModified,
-          tags: note.tags
-        }))}
-        pinnedNotes={pinnedNotes.map((note) => ({
-          title: note.title,
-          firstHeader: note.firstHeader,
-          lastModified: note.lastModified,
-          tags: note.tags
-        }))}
+        lastNotes={lastNotes.map(toNoteCardData)}
+        pinnedNotes={pinnedNotes.map(toNoteCardData)}
       />
     )
   }

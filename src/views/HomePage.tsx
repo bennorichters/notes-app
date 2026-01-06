@@ -2,7 +2,7 @@ import type { FC } from 'hono/jsx'
 import { Layout } from '../components/Layout.js'
 import { Header } from '../components/Header.js'
 import { NoteCard } from '../components/NoteCard.js'
-import type { NoteSearchResult } from '../notes.js'
+import type { NoteSearchResult } from '../search.js'
 
 type HomePageProps = {
   username: string
@@ -44,11 +44,11 @@ export const HomePage: FC<HomePageProps> = ({
 
         {searchResults ? (
           <>
-            <h2 style="color: #1e152a; margin-bottom: 1rem;">Search Results</h2>
+            <h2 class="section-title">Search Results</h2>
             {searchResults.length > 0 ? (
               searchResults.map((result) => (
                 <NoteCard
-                  title={result.note.title}
+                  title={result.note.filename}
                   firstHeader={result.note.firstHeader}
                   lastModified={result.note.lastModified}
                   tags={result.note.tags}
@@ -62,7 +62,7 @@ export const HomePage: FC<HomePageProps> = ({
           <>
             {pinnedNotes && pinnedNotes.length > 0 && (
               <>
-                <h2 style="color: #1e152a; margin-bottom: 1rem;">Pinned Notes</h2>
+                <h2 class="section-title">Pinned Notes</h2>
                 {pinnedNotes.map((note) => (
                   <NoteCard
                     title={note.title}
@@ -75,7 +75,7 @@ export const HomePage: FC<HomePageProps> = ({
             )}
             {lastNotes && lastNotes.length > 0 ? (
               <>
-                <h2 style="color: #1e152a; margin-bottom: 1rem;">Last Modified Notes</h2>
+                <h2 class="section-title">Last Modified Notes</h2>
                 {lastNotes.map((note) => (
                   <NoteCard
                     title={note.title}

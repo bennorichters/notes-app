@@ -7,8 +7,10 @@ interface Session {
   expiresAt: Date
 }
 
-const sessions = new Map<string, Session>()
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000
+const CLEANUP_INTERVAL_MS = 60 * 60 * 1000
+
+const sessions = new Map<string, Session>()
 
 export function createSession(userId: string): string {
   const sessionId = randomBytes(32).toString('hex')
@@ -53,4 +55,4 @@ export function cleanExpiredSessions(): void {
   }
 }
 
-setInterval(cleanExpiredSessions, 60 * 60 * 1000)
+setInterval(cleanExpiredSessions, CLEANUP_INTERVAL_MS)

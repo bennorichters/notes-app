@@ -1,3 +1,7 @@
+/* =========================
+   Base & Reset
+   ========================= */
+
 * {
   margin: 0;
   padding: 0;
@@ -11,6 +15,23 @@ body {
   padding: 1rem;
 }
 
+body:has(.login-container) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+h1 {
+  color: #1e152a;
+  font-size: 1.5rem;
+}
+
+/* =========================
+   Header & Navigation
+   ========================= */
+
 .header {
   background: white;
   padding: 1rem;
@@ -20,11 +41,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-h1 {
-  color: #1e152a;
-  font-size: 1.5rem;
 }
 
 .user-info {
@@ -53,6 +69,17 @@ h1 {
   background: #e56840;
 }
 
+/* =========================
+   Layout & Containers
+   ========================= */
+
+.content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(30, 21, 42, 0.15);
+}
+
 .login-container {
   background: white;
   padding: 2rem;
@@ -63,22 +90,16 @@ h1 {
   margin: 0 auto;
 }
 
-body:has(.login-container) {
+.note-header-actions {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  min-height: 100vh;
-  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
-.error {
-  background: #fce8e2;
-  color: #c44e2f;
-  padding: 0.75rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-}
+/* =========================
+   Forms & Inputs
+   ========================= */
 
 .form-group {
   margin-bottom: 1rem;
@@ -120,11 +141,156 @@ button:hover {
   background: #065f69;
 }
 
-.content {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(30, 21, 42, 0.15);
+.search-and-create {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-end;
+}
+
+.search-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex: 1;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #c9c5ad;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #087e8b;
+}
+
+.search-button {
+  padding: 0.75rem 1.5rem;
+  background: #087e8b;
+  color: white;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  white-space: nowrap;
+  width: auto;
+  margin-top: 0;
+}
+
+.search-button:hover {
+  background: #065f69;
+}
+
+.clear-button {
+  padding: 0.75rem 1rem;
+  background: #f78154;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.clear-button:hover {
+  background: #e56840;
+}
+
+.edit-form {
+  margin-top: 1rem;
+}
+
+.note-editor {
+  width: 100%;
+  min-height: 400px;
+  padding: 1rem;
+  border: 1px solid #c9c5ad;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: 'Courier New', monospace;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.note-editor:focus {
+  outline: none;
+  border-color: #087e8b;
+}
+
+.form-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-actions button {
+  width: auto;
+}
+
+/* =========================
+   Buttons & Links
+   ========================= */
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: #087e8b;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #065f69;
+}
+
+.btn-secondary {
+  background: #c9c5ad;
+  color: #2a2b2a;
+}
+
+.btn-secondary:hover {
+  background: #b5b19a;
+}
+
+.new-note-btn.btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  margin-top: 0;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #087e8b;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+/* =========================
+   Note Components
+   ========================= */
+
+.section-title {
+  color: #1e152a;
+  margin-bottom: 1rem;
 }
 
 .note-link {
@@ -147,16 +313,22 @@ button:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.back-link {
-  display: inline-block;
-  margin-bottom: 1rem;
-  color: #087e8b;
-  text-decoration: none;
-  font-size: 0.9rem;
+.note-title {
+  font-size: 1.1rem;
+  color: #2a2b2a;
+  font-weight: 500;
 }
 
-.back-link:hover {
-  text-decoration: underline;
+.note-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.tag-list {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.5rem;
 }
 
 .note-meta {
@@ -166,6 +338,21 @@ button:hover {
   padding-bottom: 1rem;
   border-bottom: 1px solid #e0e0e0;
 }
+
+.tag-badge {
+  display: inline-block;
+  background: #087e8b;
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  margin-right: 0.3rem;
+  margin-bottom: 0.3rem;
+}
+
+/* =========================
+   Markdown Content
+   ========================= */
 
 .markdown-content {
   color: #2a2b2a;
@@ -258,73 +445,9 @@ button:hover {
   font-style: italic;
 }
 
-.search-and-create {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  align-items: flex-end;
-}
-
-.search-form {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex: 1;
-}
-
-.new-note-btn.btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
-  margin-top: 0;
-  border: 1px solid transparent;
-  white-space: nowrap;
-}
-
-.search-input {
-  flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #c9c5ad;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #087e8b;
-}
-
-.search-button {
-  padding: 0.75rem 1.5rem;
-  background: #087e8b;
-  color: white;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  white-space: nowrap;
-  width: auto;
-  margin-top: 0;
-}
-
-.search-button:hover {
-  background: #065f69;
-}
-
-.clear-button {
-  padding: 0.75rem 1rem;
-  background: #f78154;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.clear-button:hover {
-  background: #e56840;
-}
+/* =========================
+   Search & Highlighting
+   ========================= */
 
 mark {
   background: #fff3cd;
@@ -333,16 +456,31 @@ mark {
   font-weight: 500;
 }
 
-.tag-badge {
-  display: inline-block;
-  background: #087e8b;
-  color: white;
-  padding: 0.2rem 0.5rem;
-  border-radius: 3px;
-  font-size: 0.8rem;
-  margin-right: 0.3rem;
-  margin-bottom: 0.3rem;
+/* =========================
+   Messages & Alerts
+   ========================= */
+
+.error {
+  background: #fce8e2;
+  color: #c44e2f;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
 }
+
+.error-message {
+  background: #fce8e2;
+  color: #c44e2f;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* =========================
+   Responsive Design
+   ========================= */
 
 @media (max-width: 600px) {
   .search-and-create {
@@ -366,84 +504,7 @@ mark {
   .new-note-btn {
     width: 100%;
   }
-}
 
-.note-header-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  text-decoration: none;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: inline-block;
-}
-
-.btn-primary {
-  background: #087e8b;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #065f69;
-}
-
-.btn-secondary {
-  background: #c9c5ad;
-  color: #2a2b2a;
-}
-
-.btn-secondary:hover {
-  background: #b5b19a;
-}
-
-.edit-form {
-  margin-top: 1rem;
-}
-
-.note-editor {
-  width: 100%;
-  min-height: 400px;
-  padding: 1rem;
-  border: 1px solid #c9c5ad;
-  border-radius: 4px;
-  font-size: 1rem;
-  font-family: 'Courier New', monospace;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.note-editor:focus {
-  outline: none;
-  border-color: #087e8b;
-}
-
-.form-actions {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.form-actions button {
-  width: auto;
-}
-
-.error-message {
-  background: #fce8e2;
-  color: #c44e2f;
-  padding: 0.75rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-}
-
-@media (max-width: 600px) {
   .note-header-actions {
     flex-direction: column;
     align-items: flex-start;
