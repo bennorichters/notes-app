@@ -66,8 +66,10 @@ export async function initGitRepository(): Promise<void> {
     console.log('Pull completed successfully')
   } else {
     console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR}...`)
-    const git = simpleGit({ config: [`safe.directory=${NOTES_UPSTREAM}`] })
-    await git.clone(NOTES_UPSTREAM, NOTES_DIR)
+    await simpleGit().raw([
+      '-c', `safe.directory=${NOTES_UPSTREAM}`,
+      'clone', NOTES_UPSTREAM, NOTES_DIR
+    ])
     console.log('Clone completed successfully')
   }
 }
