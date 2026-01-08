@@ -7,6 +7,7 @@ import { compare } from 'bcrypt'
 import { authenticator } from 'otplib'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
+import { initGitRepository } from './git.js'
 import { LoginPage } from './views/LoginPage.js'
 import { HomePage } from './views/HomePage.js'
 import { NoteDetailPage } from './views/NoteDetailPage.js'
@@ -286,6 +287,17 @@ app.get('/', requireAuth, async (c) => {
 
 const port = parseInt(process.env.PORT || '3000')
 
-serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
-  console.log(`Running on http://0.0.0.0:${info.port}`)
-})
+async function startServer() {
+  try {
+    await initGitRepository()
+  } catch (error) {
+    console.error('Failed to initialize git repository:', error)
+    process.exit(1)
+  }
+
+  serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
+    console.log(`Running on http://0.0.0.0:${info.port}`)
+  })
+}
+
+startServer()
