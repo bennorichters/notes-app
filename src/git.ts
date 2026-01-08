@@ -59,8 +59,18 @@ async function getDefaultBranch(bareRepoPath: string): Promise<string> {
 }
 
 export async function initGitRepository(): Promise<void> {
+  const localExists = await isGitRepo(NOTES_DIR)
+
   if (!NOTES_UPSTREAM) {
-    throw new Error('NOTES_UPSTREAM environment variable is not set')
+    if (localExists) {
+      console.log(`Local repository exists at ${NOTES_DIR}, using it without upstream`)
+    } else {
+      console.log(`Initializing new git repository at ${NOTES_DIR}`)
+      const git = simpleGit()
+      await git.init(NOTES_DIR)
+      console.log('Git repository initialized successfully')
+    }
+    return
   }
 
   const upstreamExists = await isDirectory(NOTES_UPSTREAM)
@@ -72,8 +82,6 @@ export async function initGitRepository(): Promise<void> {
   if (!upstreamIsBare) {
     throw new Error(`Upstream is not a bare repository: ${NOTES_UPSTREAM}`)
   }
-
-  const localExists = await isGitRepo(NOTES_DIR)
 
   if (localExists) {
     console.log(`Local repository exists at ${NOTES_DIR}, pulling latest changes...`)
