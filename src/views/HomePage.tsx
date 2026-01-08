@@ -43,7 +43,7 @@ export const HomePage: FC<HomePageProps> = ({
           </form>
           <a href="/note/new" class="btn btn-primary new-note-btn">New Note</a>
           <form method="post" action="/sync" class="sync-form">
-            <button type="submit" class="btn btn-secondary sync-btn" title="Sync from upstream">↻</button>
+            <button type="submit" class="btn btn-secondary sync-btn" title="Synchronize">↻</button>
           </form>
         </div>
         {error && <div class="error-message">{error}</div>}
