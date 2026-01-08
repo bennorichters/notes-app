@@ -66,8 +66,8 @@ export async function initGitRepository(): Promise<void> {
       console.log(`Local repository exists at ${NOTES_DIR}, using it without upstream`)
     } else {
       console.log(`Initializing new git repository at ${NOTES_DIR}`)
-      const git = simpleGit()
-      await git.init(NOTES_DIR)
+      const git = simpleGit(NOTES_DIR)
+      await git.init()
       console.log('Git repository initialized successfully')
     }
     return
