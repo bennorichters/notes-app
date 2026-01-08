@@ -43,8 +43,14 @@ async function isGitRepo(path: string): Promise<boolean> {
 async function getDefaultBranch(bareRepoPath: string): Promise<string> {
   try {
     const git = simpleGit(bareRepoPath)
-    const result = await git.raw(['symbolic-ref', '--short', 'HEAD'])
-    return result.trim()
+    const result = await git.raw(['branch'])
+    const branches = result
+      .split('\n')
+      .map(b => b.replace('*', '').trim())
+      .filter(b => b.length > 0)
+    if (branches.includes('main')) return 'main'
+    if (branches.includes('master')) return 'master'
+    return branches[0] || 'main'
   } catch {
     return 'main'
   }
