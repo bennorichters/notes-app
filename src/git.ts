@@ -1,10 +1,9 @@
 import { simpleGit, type SimpleGit } from 'simple-git'
+import { execSync } from 'child_process'
 import { access, constants } from 'fs/promises'
 import { join } from 'path'
 
-process.env.GIT_CONFIG_COUNT = '1'
-process.env.GIT_CONFIG_KEY_0 = 'safe.directory'
-process.env.GIT_CONFIG_VALUE_0 = '*'
+execSync('git config --global safe.directory "*"')
 
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
