@@ -7,7 +7,10 @@ const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
 
 export function getGit(): SimpleGit {
   return simpleGit(NOTES_DIR, {
-    config: [`safe.directory=${NOTES_DIR}`]
+    config: [
+      `safe.directory=${NOTES_DIR}`,
+      `safe.directory=${NOTES_UPSTREAM}`
+    ]
   })
 }
 
@@ -63,7 +66,8 @@ export async function initGitRepository(): Promise<void> {
     console.log('Pull completed successfully')
   } else {
     console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR}...`)
-    await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR)
+    const git = simpleGit({ config: [`safe.directory=${NOTES_UPSTREAM}`] })
+    await git.clone(NOTES_UPSTREAM, NOTES_DIR)
     console.log('Clone completed successfully')
   }
 }
