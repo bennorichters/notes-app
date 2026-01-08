@@ -272,6 +272,18 @@ button:hover {
   white-space: nowrap;
 }
 
+.sync-form {
+  display: inline;
+}
+
+.sync-btn.btn {
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+  margin-top: 0;
+  border: 1px solid transparent;
+  width: auto;
+}
+
 .back-link {
   display: inline-block;
   margin-bottom: 1rem;
@@ -502,7 +514,11 @@ mark {
   }
 
   .new-note-btn {
-    width: 100%;
+    flex: 1;
+  }
+
+  .sync-btn.btn {
+    flex: 0;
   }
 
   .note-header-actions {

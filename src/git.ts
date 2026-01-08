@@ -136,3 +136,8 @@ export function queueCommitAndPush(
     await commitAndPush(relativePath, commitMessage)
   })
 }
+
+export async function pullFromUpstream(): Promise<void> {
+  const git = getGit()
+  await git.pull()
+}
