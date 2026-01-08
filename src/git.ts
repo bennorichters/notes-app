@@ -2,16 +2,15 @@ import { simpleGit, type SimpleGit } from 'simple-git'
 import { access, constants } from 'fs/promises'
 import { join } from 'path'
 
+process.env.GIT_CONFIG_COUNT = '1'
+process.env.GIT_CONFIG_KEY_0 = 'safe.directory'
+process.env.GIT_CONFIG_VALUE_0 = '*'
+
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
 
 export function getGit(): SimpleGit {
-  return simpleGit(NOTES_DIR, {
-    config: [
-      `safe.directory=${NOTES_DIR}`,
-      `safe.directory=${NOTES_UPSTREAM}`
-    ]
-  })
+  return simpleGit(NOTES_DIR)
 }
 
 async function isDirectory(path: string): Promise<boolean> {
@@ -25,7 +24,7 @@ async function isDirectory(path: string): Promise<boolean> {
 
 async function isBareRepo(path: string): Promise<boolean> {
   try {
-    const git = simpleGit(path, { config: [`safe.directory=${path}`] })
+    const git = simpleGit(path)
     const result = await git.raw(['rev-parse', '--is-bare-repository'])
     return result.trim() === 'true'
   } catch {
@@ -66,10 +65,7 @@ export async function initGitRepository(): Promise<void> {
     console.log('Pull completed successfully')
   } else {
     console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR}...`)
-    await simpleGit().raw([
-      '-c', `safe.directory=${NOTES_UPSTREAM}`,
-      'clone', NOTES_UPSTREAM, NOTES_DIR
-    ])
+    await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR)
     console.log('Clone completed successfully')
   }
 }
