@@ -4,6 +4,8 @@ import { access, constants } from 'fs/promises'
 import { join } from 'path'
 
 execSync('git config --global safe.directory "*"')
+execSync('git config --global user.email "notes@app.local"')
+execSync('git config --global user.name "Notes App"')
 
 const NOTES_DIR = process.env.NOTES_DIR || './notes'
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
