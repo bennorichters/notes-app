@@ -40,6 +40,16 @@ async function isGitRepo(path: string): Promise<boolean> {
   }
 }
 
+async function getDefaultBranch(bareRepoPath: string): Promise<string> {
+  try {
+    const git = simpleGit(bareRepoPath)
+    const result = await git.raw(['symbolic-ref', '--short', 'HEAD'])
+    return result.trim()
+  } catch {
+    return 'main'
+  }
+}
+
 export async function initGitRepository(): Promise<void> {
   if (!NOTES_UPSTREAM) {
     throw new Error('NOTES_UPSTREAM environment variable is not set')
@@ -63,8 +73,9 @@ export async function initGitRepository(): Promise<void> {
     await git.pull()
     console.log('Pull completed successfully')
   } else {
-    console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR}...`)
-    await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR)
+    const branch = await getDefaultBranch(NOTES_UPSTREAM)
+    console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR} (branch: ${branch})...`)
+    await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR, ['--branch', branch])
     console.log('Clone completed successfully')
   }
 }
