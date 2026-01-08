@@ -22,7 +22,7 @@ async function isDirectory(path: string): Promise<boolean> {
 
 async function isBareRepo(path: string): Promise<boolean> {
   try {
-    const git = simpleGit(path)
+    const git = simpleGit(path, { config: [`safe.directory=${path}`] })
     const result = await git.raw(['rev-parse', '--is-bare-repository'])
     return result.trim() === 'true'
   } catch {
