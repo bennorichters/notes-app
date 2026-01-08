@@ -7,6 +7,7 @@ import { compare } from 'bcrypt'
 import { authenticator } from 'otplib'
 import { requireAuth } from './auth.js'
 import { createSession, deleteSession } from './session.js'
+import { initGitRepository, pullFromUpstream } from './git.js'
 import { LoginPage } from './views/LoginPage.js'
 import { HomePage } from './views/HomePage.js'
 import { NoteDetailPage } from './views/NoteDetailPage.js'
@@ -20,6 +21,7 @@ import {
   renderMarkdown,
   updateNote,
   createNote,
+  invalidateCache,
   type Note
 } from './notes.js'
 import { searchNotes, type NoteSearchResult } from './search.js'
@@ -255,6 +257,28 @@ app.post('/note/:filename/edit', requireAuth, async (c) => {
   }
 })
 
+app.post('/sync', requireAuth, async (c) => {
+  try {
+    await pullFromUpstream()
+    invalidateCache()
+    return c.redirect('/')
+  } catch (error) {
+    console.error('Sync failed:', error)
+    const userId = c.get('userId') as string
+    const lastNotes = await getLastThreeModifiedNotes()
+    const pinnedNotes = await getPinnedNotes()
+    return c.html(
+      <HomePage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        lastNotes={lastNotes.map(toNoteCardData)}
+        pinnedNotes={pinnedNotes.map(toNoteCardData)}
+        error="Failed to sync from upstream"
+      />
+    )
+  }
+})
+
 app.get('/', requireAuth, async (c) => {
   const userId = c.get('userId') as string
   const query = c.req.query('q') || ''
@@ -286,6 +310,17 @@ app.get('/', requireAuth, async (c) => {
 
 const port = parseInt(process.env.PORT || '3000')
 
-serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
-  console.log(`Running on http://0.0.0.0:${info.port}`)
-})
+async function startServer() {
+  try {
+    await initGitRepository()
+  } catch (error) {
+    console.error('Failed to initialize git repository:', error)
+    process.exit(1)
+  }
+
+  serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
+    console.log(`Running on http://0.0.0.0:${info.port}`)
+  })
+}
+
+startServer()

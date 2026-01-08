@@ -31,7 +31,7 @@ function isCacheValid(): boolean {
   return Date.now() - cache.timestamp < CACHE_TTL_MS
 }
 
-function invalidateCache(): void {
+export function invalidateCache(): void {
   cache = null
 }
 
