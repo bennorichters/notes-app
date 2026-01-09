@@ -148,13 +148,6 @@ button:hover {
   align-items: flex-end;
 }
 
-.search-form {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex: 1;
-}
-
 .search-input {
   flex: 1;
   padding: 0.75rem;
@@ -163,22 +156,36 @@ button:hover {
   font-size: 1rem;
 }
 
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.search-form {
+  display: inline;
+}
+
 .search-input:focus {
   outline: none;
   border-color: #087e8b;
 }
 
 .search-button {
-  padding: 0.75rem 1.5rem;
+  padding: 0;
   background: #087e8b;
   color: white;
   border: 1px solid transparent;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   white-space: nowrap;
-  width: auto;
+  width: 3rem;
+  height: 3rem;
   margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .search-button:hover {
@@ -186,7 +193,7 @@ button:hover {
 }
 
 .clear-button {
-  padding: 0.75rem 1rem;
+  padding: 0;
   background: #f78154;
   color: white;
   border: none;
@@ -195,6 +202,11 @@ button:hover {
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .clear-button:hover {
@@ -265,11 +277,16 @@ button:hover {
 }
 
 .new-note-btn.btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  padding: 0;
+  font-size: 1.5rem;
   margin-top: 0;
   border: 1px solid transparent;
   white-space: nowrap;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sync-form {
@@ -277,11 +294,15 @@ button:hover {
 }
 
 .sync-btn.btn {
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
+  padding: 0;
+  font-size: 1.2rem;
   margin-top: 0;
   border: 1px solid transparent;
-  width: auto;
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .back-link {
@@ -497,29 +518,19 @@ mark {
 @media (max-width: 600px) {
   .search-and-create {
     flex-direction: column;
-  }
-
-  .search-form {
-    flex-wrap: wrap;
+    align-items: stretch;
   }
 
   .search-input {
-    flex: 1 1 100%;
-    min-width: 100%;
+    width: 100%;
   }
 
-  .search-button,
-  .clear-button {
-    flex: 1;
+  .button-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-start;
   }
 
-  .new-note-btn {
-    flex: 1;
-  }
-
-  .sync-btn.btn {
-    flex: 0;
-  }
 
   .note-header-actions {
     flex-direction: column;

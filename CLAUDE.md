@@ -1,25 +1,185 @@
-# Gerneral Info
-- This app is a web app.
-- The web runs on a VPS as a Dokku app
-- It interacts with the git repo at /var/lib/dokku/data/storage/notes
-- It can search through notes and create new ones
-- It's mobile friendly and usable on a desktop
-- Login with user name password
-- Has MFA 
-- Each file is a separate note
-- Each note is written in Markdown
-- Most notes end with a colon separated line of tags, i.e., :tag1:tag2:tag3:
-- The app needs full text search and fuzzy search.
-- The app needs to be able to search through tags
-- There are less than 1000 files
-- The total size of the notes is a few MB.
-- Changing and creating notes need to trigger git commit and push
-- It's single user for now
-- Note editing is with a simple text area for now.
+# General Info
 
-# Code style
+This is a single-user, git-backed note-taking web application with full-text search,
+MFA, and mobile-friendly design.
+
+## Architecture
+- Web app built with Hono (lightweight web framework)
+- Server-side rendering with Hono JSX
+- Runs on VPS as Dokku app
+- Git-backed storage at /var/lib/dokku/data/storage/notes
+- Supports bare git repositories for upstream sync
+- 30-second cache with invalidation on changes
+- Queue-based git operations to prevent conflicts
+
+## Features
+- Full-text fuzzy search with Fuse.js
+- Tag-based search (colon-separated: :tag1:tag2:tag3:)
+- Note pinning via :pinned: tag
+- Automatic git commit and push on create/update
+- Manual upstream sync with /sync endpoint
+- Username/password authentication with bcrypt
+- TOTP-based MFA (optional)
+- Session management with 7-day expiration
+- Mobile-friendly responsive design
+- Simple textarea editor
+- Markdown rendering with GFM support
+
+## Data Model
+- Each file is a separate note in Markdown format
+- Filenames: YYYY-MM-DD_HH:MM:SS.md (auto-timestamped)
+- New notes created in notes/new/ subdirectory
+- Most notes end with colon-separated tags on last line
+- First header (H1-H6) used as note title
+- Less than 1000 files total
+- Total size: few MB
+
+# Technology Stack
+
+## Core Dependencies
+- **hono** (v4.11.3) - Web framework with JSX support
+- **@hono/node-server** (v1.19.7) - Node.js adapter
+- **simple-git** (v3.30.0) - Git operations
+- **fuse.js** (v7.1.0) - Fuzzy search
+- **marked** (v17.0.1) - Markdown parsing
+- **bcrypt** (v6.0.0) - Password hashing
+- **otplib** (v12.0.1) - TOTP MFA
+- **qrcode** (v1.5.4) - QR code generation
+
+## Runtime
+- Node.js 24.12.0
+- npm 11.7.0
+- TypeScript 5.9.3
+
+# Project Structure
+
+```
+/home/user/notes-app/
+├── src/
+│   ├── index.tsx              Main server entry point
+│   ├── auth.ts                Authentication middleware
+│   ├── session.ts             Session management
+│   ├── notes.ts               Note operations & caching
+│   ├── git.ts                 Git integration & queue
+│   ├── search.ts              Fuzzy search with Fuse.js
+│   ├── markdown.ts            Markdown parsing utilities
+│   ├── components/
+│   │   ├── Layout.tsx         HTML layout wrapper
+│   │   ├── Header.tsx         Page header with auth info
+│   │   └── NoteCard.tsx       Note list item component
+│   └── views/
+│       ├── LoginPage.tsx      Login form with MFA
+│       ├── HomePage.tsx       Dashboard with search
+│       ├── NoteDetailPage.tsx View rendered note
+│       ├── EditNotePage.tsx   Edit note textarea
+│       └── NewNotePage.tsx    Create note form
+├── public/
+│   ├── styles.css             Responsive UI styling
+│   └── favicon.svg
+├── scripts/
+│   ├── hash-password.ts       Password hashing utility
+│   └── setup-mfa.ts           MFA setup with QR code
+├── package.json
+├── tsconfig.json
+├── app.json                   Dokku deployment config
+├── Procfile                   Process definition
+└── .env.example               Environment template
+```
+
+# Environment Variables
+
+Required:
+- **USERNAME** - Login username
+- **PASSWORD_HASH** - Bcrypt hash (use scripts/hash-password.ts)
+
+Optional:
+- **TOTP_SECRET** - Base32 MFA secret (use scripts/setup-mfa.ts)
+- **NOTES_DIR** - Note storage path (default: /app/notes)
+- **NOTES_UPSTREAM** - Bare git repo path (optional, enables sync)
+- **SKIP_AUTH** - Set to "true" for local development bypass
+- **PORT** - Server port (default: 3000)
+- **NODE_ENV** - development or production
+
+# Development
+
+## Setup
+```bash
+npm install
+npm run build
+```
+
+## Run locally
+```bash
+SKIP_AUTH=true npm run dev
+```
+
+## Create password hash
+```bash
+npx tsx scripts/hash-password.ts
+```
+
+## Setup MFA (optional)
+```bash
+npx tsx scripts/setup-mfa.ts
+```
+
+## Build for production
+```bash
+npm run build
+npm start
+```
+
+# Deployment
+
+## Dokku Configuration
+- **Process**: Single web process defined in Procfile
+- **Build**: npm run build (TypeScript → JavaScript)
+- **Start**: node dist/index.js
+- **Health Check**: GET /health (3 attempts, 5s timeout)
+- **Data Storage**: /var/lib/dokku/data/storage/notes
+
+## Git Integration
+- Pull-before-push strategy prevents conflicts
+- Queue-based operations prevent race conditions
+- Graceful fallback if upstream unavailable
+- Auto-detects branch (main/master/first)
+- Git user: notes@app.local (Notes App)
+
+# Code Style
+
 - Never use comments
-- Try to limit the line size to 100 characters
+- Limit line length to 100 characters
+- Use TypeScript strict mode
+- Server-side JSX components for UI
+- Functional programming style preferred
 
 # Workflow
-- When adding new dependencies, use the latest version 
+
+- Always use latest dependency versions when adding new packages
+- Test locally with SKIP_AUTH=true before deployment
+- Commit message format: "Create <filename>" or "Update <filename>"
+- Use npm run build to verify TypeScript compilation
+
+# Security
+
+- Bcrypt password hashing (10 rounds)
+- TOTP-based MFA (RFC 6238 compliant)
+- HTTP-only, secure cookies in production
+- SameSite=Lax cookie policy
+- 7-day session expiration
+- Constant-time password comparison
+- Hourly cleanup of expired sessions
+
+# Search Implementation
+
+## Weighted Fields
+- Tags: weight 3 (highest priority)
+- First header: weight 2
+- Filename: weight 1.5
+- Content: weight 1
+
+## Configuration
+- Fuse.js threshold: 0.2 (80% match required)
+- Minimum search length: 2 characters
+- Result limit: 5 notes
+- Case-insensitive matching
