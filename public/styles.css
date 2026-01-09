@@ -512,6 +512,51 @@ mark {
 }
 
 /* =========================
+   TODO Components
+   ========================= */
+
+.todo-card {
+  border-left-color: #f78154;
+}
+
+.todo-list {
+  margin-top: 0.75rem;
+}
+
+.todo-item {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.todo-item:last-child {
+  margin-bottom: 0;
+}
+
+.todo-date {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.todo-date-overdue {
+  color: #c44e2f;
+}
+
+.todo-date-today {
+  color: #087e8b;
+}
+
+.todo-date-upcoming {
+  color: #2a7d3f;
+}
+
+.todo-description {
+  color: #2a2b2a;
+}
+
+/* =========================
    Responsive Design
    ========================= */
 
