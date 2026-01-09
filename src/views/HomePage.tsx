@@ -28,23 +28,26 @@ export const HomePage: FC<HomePageProps> = ({
       <Header username={username} showAuth={showAuth} />
       <div class="content">
         <div class="search-and-create">
-          <form method="get" action="/" class="search-form">
-            <input
-              type="text"
-              name="q"
-              placeholder="Search notes, tags..."
-              value={query || ''}
-              class="search-input"
-            />
-            <button type="submit" class="search-button">Search</button>
+          <input
+            type="text"
+            name="q"
+            placeholder="Search notes, tags..."
+            value={query || ''}
+            class="search-input"
+            form="search-form"
+          />
+          <div class="button-group">
+            <form method="get" action="/" id="search-form" class="search-form">
+              <button type="submit" class="search-button">🔍</button>
+            </form>
             {query && (
               <a href="/" class="clear-button">Clear</a>
             )}
-          </form>
-          <a href="/note/new" class="btn btn-primary new-note-btn">New Note</a>
-          <form method="post" action="/sync" class="sync-form">
-            <button type="submit" class="btn btn-secondary sync-btn" title="Synchronize">↻</button>
-          </form>
+            <a href="/note/new" class="btn btn-primary new-note-btn">+</a>
+            <form method="post" action="/sync" class="sync-form">
+              <button type="submit" class="btn btn-secondary sync-btn" title="Synchronize">↻</button>
+            </form>
+          </div>
         </div>
         {error && <div class="error-message">{error}</div>}
 

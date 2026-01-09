@@ -148,13 +148,6 @@ button:hover {
   align-items: flex-end;
 }
 
-.search-form {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  flex: 1;
-}
-
 .search-input {
   flex: 1;
   padding: 0.75rem;
@@ -163,21 +156,31 @@ button:hover {
   font-size: 1rem;
 }
 
+.button-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.search-form {
+  display: inline;
+}
+
 .search-input:focus {
   outline: none;
   border-color: #087e8b;
 }
 
 .search-button {
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem;
   background: #087e8b;
   color: white;
   border: 1px solid transparent;
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 1.2rem;
   cursor: pointer;
   white-space: nowrap;
-  width: auto;
+  width: 3rem;
   margin-top: 0;
 }
 
@@ -265,11 +268,13 @@ button:hover {
 }
 
 .new-note-btn.btn {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  padding: 0.75rem;
+  font-size: 1.5rem;
   margin-top: 0;
   border: 1px solid transparent;
   white-space: nowrap;
+  width: 3rem;
+  text-align: center;
 }
 
 .sync-form {
@@ -497,28 +502,35 @@ mark {
 @media (max-width: 600px) {
   .search-and-create {
     flex-direction: column;
-  }
-
-  .search-form {
-    flex-wrap: wrap;
+    align-items: stretch;
   }
 
   .search-input {
-    flex: 1 1 100%;
-    min-width: 100%;
+    width: 100%;
   }
 
-  .search-button,
+  .button-group {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-start;
+  }
+
+  .search-button {
+    width: 3rem;
+  }
+
   .clear-button {
-    flex: 1;
+    width: 3rem;
+    padding: 0.75rem;
+    text-align: center;
   }
 
-  .new-note-btn {
-    flex: 1;
+  .new-note-btn.btn {
+    width: 3rem;
   }
 
   .sync-btn.btn {
-    flex: 0;
+    width: 3rem;
   }
 
   .note-header-actions {
