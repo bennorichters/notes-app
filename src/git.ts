@@ -4,10 +4,6 @@ import { access, constants } from 'fs/promises'
 import { join } from 'path'
 import { NOTES_DIR, GIT_USER_EMAIL, GIT_USER_NAME } from './config/index.js'
 
-execSync('git config --global safe.directory "*"')
-execSync(`git config --global user.email "${GIT_USER_EMAIL}"`)
-execSync(`git config --global user.name "${GIT_USER_NAME}"`)
-
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
 
 export function getGit(): SimpleGit {
@@ -56,6 +52,12 @@ async function getDefaultBranch(bareRepoPath: string): Promise<string> {
   } catch {
     return 'main'
   }
+}
+
+export function initGitConfig(): void {
+  execSync('git config --global safe.directory "*"')
+  execSync(`git -C "${NOTES_DIR}" config user.email "${GIT_USER_EMAIL}"`)
+  execSync(`git -C "${NOTES_DIR}" config user.name "${GIT_USER_NAME}"`)
 }
 
 export async function initGitRepository(): Promise<void> {
