@@ -36,7 +36,7 @@ function parseDate(dateString: string): { date: Date | null; isValid: boolean } 
   return { date, isValid: true }
 }
 
-function parseTodoLine(line: string): TodoItem | null {
+export function parseTodoLine(line: string): TodoItem | null {
   const match = line.match(TODO_PATTERN)
   if (!match) {
     return null

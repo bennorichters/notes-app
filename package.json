@@ -9,7 +9,7 @@
     "start": "node dist/index.js",
     "hash-password": "tsx scripts/hash-password.ts",
     "setup-mfa": "tsx scripts/setup-mfa.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -36,6 +36,7 @@
     "@types/qrcode": "^1.5.6",
     "qrcode": "^1.5.4",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }
