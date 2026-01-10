@@ -6,11 +6,14 @@ MFA, and mobile-friendly design.
 ## Architecture
 - Web app built with Hono (lightweight web framework)
 - Server-side rendering with Hono JSX
+- Layered architecture: routes → services → data access
+- Centralized configuration with validation on startup
 - Runs on VPS as Dokku app
 - Git-backed storage at /var/lib/dokku/data/storage/notes
 - Supports bare git repositories for upstream sync
 - 30-second cache with invalidation on changes
 - Queue-based git operations to prevent conflicts
+- Structured error logging with contextual information
 
 ## Features
 - Full-text fuzzy search with Fuse.js
@@ -62,7 +65,17 @@ MFA, and mobile-friendly design.
 ```
 /home/user/notes-app/
 ├── src/
-│   ├── index.tsx              Main server entry point
+│   ├── index.tsx              Main server entry point (slim, ~40 lines)
+│   ├── config/
+│   │   └── index.ts           Configuration constants & validation
+│   ├── routes/
+│   │   ├── auth.tsx           Login/logout route handlers
+│   │   ├── notes.tsx          Note CRUD route handlers
+│   │   └── home.tsx           Home page & sync route handlers
+│   ├── services/
+│   │   └── homePageService.ts Business logic for home page data
+│   ├── types/
+│   │   └── index.ts           Shared TypeScript types
 │   ├── auth.ts                Authentication middleware
 │   ├── session.ts             Session management
 │   ├── notes.ts               Note operations & caching
@@ -71,6 +84,7 @@ MFA, and mobile-friendly design.
 │   ├── markdown.ts            Markdown parsing utilities
 │   ├── todos.ts               TODO parsing & filtering
 │   ├── todos.test.ts          Unit tests for TODO parsing
+│   ├── logger.ts              Structured error logging utility
 │   ├── components/
 │   │   ├── Layout.tsx         HTML layout wrapper
 │   │   ├── Header.tsx         Page header with auth info
@@ -81,7 +95,8 @@ MFA, and mobile-friendly design.
 │       ├── HomePage.tsx       Dashboard with search
 │       ├── NoteDetailPage.tsx View rendered note
 │       ├── EditNotePage.tsx   Edit note textarea
-│       └── NewNotePage.tsx    Create note form
+│       ├── NewNotePage.tsx    Create note form
+│       └── ErrorPage.tsx      Error display page (404, 500)
 ├── public/
 │   ├── styles.css             Responsive UI styling
 │   └── favicon.svg
@@ -157,7 +172,47 @@ npm start
 - Queue-based operations prevent race conditions
 - Graceful fallback if upstream unavailable
 - Auto-detects branch (main/master/first)
-- Git user: notes@app.local (Notes App)
+- Git config only set for newly created repositories (preserves existing config)
+- Git user for app-created repos: notes@app.local (Notes App)
+- Respects existing git credentials for manually cloned repositories
+
+# Configuration
+
+All configuration constants are centralized in `src/config/index.ts`:
+
+## Application Constants
+- `SESSION_MAX_AGE_SECONDS`: 7 days session duration
+- `SESSION_CLEANUP_INTERVAL_MS`: 1 hour cleanup interval
+- `SESSION_ID_BYTES`: 32 bytes for session IDs
+- `SEARCH_RESULTS_LIMIT`: 5 search results per query
+- `LAST_MODIFIED_NOTES_COUNT`: 3 notes on home page
+- `CACHE_TTL_MS`: 30 seconds cache time-to-live
+- `TODO_DAYS_AHEAD`: 7 days ahead for TODO filtering
+- `NEW_NOTES_SUBDIR`: 'new' subdirectory for new notes
+- `GIT_USER_EMAIL`: 'notes@app.local' for git commits
+- `GIT_USER_NAME`: 'Notes App' for git commits
+
+## Validation on Startup
+- Validates `PASSWORD_HASH` is set (when auth enabled)
+- Validates `TOTP_SECRET` is set (when auth enabled)
+- Validates `PORT` is a valid port number (1-65535)
+- Exits with clear error messages if validation fails
+- Provides instructions for fixing configuration errors
+
+# Error Handling
+
+## Structured Logging
+- All errors logged with timestamps and context
+- Format: `[timestamp] ERROR in contextName: message`
+- Includes details (userId, filename, query, etc.)
+- Stack traces captured for debugging
+
+## User-Facing Errors
+- 404 errors show ErrorPage with "Note Not Found" message
+- 500 errors show ErrorPage with "Error Loading Page" message
+- Error pages include "Go Home" button for easy navigation
+- Git operation failures logged but don't crash the app
+- Sync failures display error message on home page
 
 # Code Style
 
@@ -166,6 +221,8 @@ npm start
 - Use TypeScript strict mode
 - Server-side JSX components for UI
 - Functional programming style preferred
+- Layered architecture: routes handle HTTP, services handle business logic
+- Centralized configuration in config/index.ts
 
 # Workflow
 
