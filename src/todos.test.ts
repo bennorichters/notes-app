@@ -30,6 +30,14 @@ describe('parseTodoLine', () => {
     expect(result!.isDone).toBe(false)
   })
 
+  it('parses a TODO with single space in brackets as not done', () => {
+    const result = parseTodoLine('- TODO[ ] 2026-01-13 Fix the code')
+    expect(result).not.toBeNull()
+    expect(result!.isDone).toBe(false)
+    expect(result!.dueDateString).toBe('2026-01-13')
+    expect(result!.description).toBe('Fix the code')
+  })
+
   it('parses an indented TODO', () => {
     const result = parseTodoLine('  - TODO[] 2026-01-10 Indented task')
     expect(result).not.toBeNull()
