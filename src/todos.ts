@@ -74,7 +74,7 @@ function getDateOnly(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
 }
 
-function isWithinDateRange(todo: TodoItem, today: Date, maxDate: Date): boolean {
+function isWithinDateRange(todo: TodoItem, maxDate: Date): boolean {
   if (!todo.isValid || !todo.dueDate) {
     return true
   }
@@ -93,7 +93,7 @@ export function getNotesWithTodos(notes: Note[]): NoteWithTodos[] {
   for (const note of notes) {
     const allTodos = extractTodos(note.content)
     const pendingTodos = allTodos.filter(todo => !todo.isDone)
-    const todosInRange = pendingTodos.filter(todo => isWithinDateRange(todo, today, maxDate))
+    const todosInRange = pendingTodos.filter(todo => isWithinDateRange(todo, maxDate))
 
     if (todosInRange.length === 0) {
       continue
