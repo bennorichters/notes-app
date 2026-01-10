@@ -23,7 +23,7 @@ export async function buildHomePageData(): Promise<HomePageData> {
   const lastNotes = allNotes.slice(0, LAST_MODIFIED_NOTES_COUNT)
   const pinnedNotes = allNotes
     .filter(note => note.isPinned)
-    .sort((a, b) => a.filename.localeCompare(b.filename))
+    .sort((a, b) => a.filename.localeCompare(b.filename, undefined, { sensitivity: 'base' }))
   const notesWithTodos = getNotesWithTodos(allNotes)
   const todoNotes = notesWithTodos.map(nwt => ({
     noteFilename: nwt.note.filename,
