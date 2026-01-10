@@ -64,7 +64,10 @@ export function initGitConfig(): void {
 }
 
 export async function initGitRepository(): Promise<void> {
-  execSync('git config --global safe.directory "*"')
+  execSync(`git config --global --add safe.directory "${NOTES_DIR}"`)
+  if (NOTES_UPSTREAM) {
+    execSync(`git config --global --add safe.directory "${NOTES_UPSTREAM}"`)
+  }
 
   const localExists = await isGitRepo(NOTES_DIR)
 
