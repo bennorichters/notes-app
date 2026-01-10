@@ -541,15 +541,17 @@ mark {
 }
 
 .todo-date-overdue {
-  color: #c44e2f;
+  color: #f78154;
+  font-weight: bold;
 }
 
 .todo-date-today {
   color: #087e8b;
+  font-weight: bold;
 }
 
 .todo-date-upcoming {
-  color: #2a7d3f;
+  color: #087e8b;
 }
 
 .todo-description {
