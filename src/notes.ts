@@ -2,10 +2,7 @@ import { readdir, readFile, writeFile, stat, mkdir } from 'fs/promises'
 import { join, relative } from 'path'
 import { getGit, queueCommitAndPush } from './git.js'
 import { extractFirstHeader, extractTags, renderMarkdown } from './markdown.js'
-
-const NOTES_DIR = process.env.NOTES_DIR || './notes'
-const LAST_MODIFIED_NOTES_COUNT = 3
-const CACHE_TTL_MS = 30 * 1000
+import { NOTES_DIR, CACHE_TTL_MS, NEW_NOTES_SUBDIR } from './config/index.js'
 
 export { renderMarkdown }
 
@@ -33,27 +30,6 @@ function isCacheValid(): boolean {
 
 export function invalidateCache(): void {
   cache = null
-}
-
-export async function getLastThreeModifiedNotes(): Promise<Note[]> {
-  try {
-    const notes = await getAllNotes()
-    return notes.slice(0, LAST_MODIFIED_NOTES_COUNT)
-  } catch (error) {
-    console.error(`Error getting last ${LAST_MODIFIED_NOTES_COUNT} modified notes from ${NOTES_DIR}:`, error)
-    return []
-  }
-}
-
-export async function getPinnedNotes(): Promise<Note[]> {
-  try {
-    const notes = await getAllNotes()
-    const pinnedNotes = notes.filter(note => note.isPinned)
-    return pinnedNotes.sort((a, b) => a.filename.localeCompare(b.filename))
-  } catch (error) {
-    console.error(`Error getting pinned notes from ${NOTES_DIR}:`, error)
-    return []
-  }
 }
 
 export async function getNoteByFilename(filename: string): Promise<Note | null> {
@@ -156,7 +132,7 @@ export async function updateNote(filename: string, content: string): Promise<voi
 }
 
 export async function createNote(content: string): Promise<string> {
-  const newDir = join(NOTES_DIR, 'new')
+  const newDir = join(NOTES_DIR, NEW_NOTES_SUBDIR)
 
   try {
     await mkdir(newDir, { recursive: true })
@@ -191,7 +167,7 @@ export async function createNote(content: string): Promise<string> {
   await writeFile(filePath, content, 'utf-8')
   invalidateCache()
 
-  queueCommitAndPush(`new/${filename}`, `Create ${filename}`)
+  queueCommitAndPush(`${NEW_NOTES_SUBDIR}/${filename}`, `Create ${filename}`)
 
   return filename.replace('.md', '')
 }

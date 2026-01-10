@@ -1,12 +1,8 @@
 import type { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { getSession } from './session.js'
-
-type Variables = {
-  userId: string
-}
-
-const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
+import type { Variables } from './types/index.js'
+import { SKIP_AUTH } from './config/index.js'
 
 export async function requireAuth(c: Context<{ Variables: Variables }>, next: Next) {
   if (SKIP_AUTH) {

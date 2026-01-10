@@ -2,12 +2,9 @@ import { simpleGit, type SimpleGit } from 'simple-git'
 import { execSync } from 'child_process'
 import { access, constants } from 'fs/promises'
 import { join } from 'path'
+import { NOTES_DIR, GIT_USER_EMAIL, GIT_USER_NAME } from './config/index.js'
+import { logError, logWarning } from './logger.js'
 
-execSync('git config --global safe.directory "*"')
-execSync('git config --global user.email "notes@app.local"')
-execSync('git config --global user.name "Notes App"')
-
-const NOTES_DIR = process.env.NOTES_DIR || './notes'
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
 
 export function getGit(): SimpleGit {
@@ -58,6 +55,12 @@ async function getDefaultBranch(bareRepoPath: string): Promise<string> {
   }
 }
 
+export function initGitConfig(): void {
+  execSync('git config --global safe.directory "*"')
+  execSync(`git -C "${NOTES_DIR}" config user.email "${GIT_USER_EMAIL}"`)
+  execSync(`git -C "${NOTES_DIR}" config user.name "${GIT_USER_NAME}"`)
+}
+
 export async function initGitRepository(): Promise<void> {
   const localExists = await isGitRepo(NOTES_DIR)
 
@@ -68,6 +71,7 @@ export async function initGitRepository(): Promise<void> {
       console.log(`Initializing new git repository at ${NOTES_DIR}`)
       const git = simpleGit(NOTES_DIR)
       await git.init()
+      initGitConfig()
       console.log('Git repository initialized successfully')
     }
     return
@@ -92,6 +96,7 @@ export async function initGitRepository(): Promise<void> {
     const branch = await getDefaultBranch(NOTES_UPSTREAM)
     console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR} (branch: ${branch})...`)
     await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR, ['--branch', branch])
+    initGitConfig()
     console.log('Clone completed successfully')
   }
 }
@@ -112,7 +117,7 @@ async function processGitQueue() {
       try {
         await operation()
       } catch (error) {
-        console.error(`Git operation failed in queue from ${NOTES_DIR}:`, error)
+        logError('gitQueue', error, { notesDir: NOTES_DIR })
       }
     }
   }

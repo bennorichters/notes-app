@@ -4,19 +4,13 @@ import { Header } from '../components/Header.js'
 import { NoteCard } from '../components/NoteCard.js'
 import { TodoCard } from '../components/TodoCard.js'
 import type { NoteSearchResult } from '../search.js'
-import type { TodoItem } from '../todos.js'
-
-type TodoNoteData = {
-  noteFilename: string
-  noteTitle: string
-  todos: TodoItem[]
-}
+import type { NoteCardData, TodoNoteData } from '../types/index.js'
 
 type HomePageProps = {
   username: string
   showAuth: boolean
-  lastNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
-  pinnedNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
+  lastNotes?: NoteCardData[]
+  pinnedNotes?: NoteCardData[]
   todoNotes?: TodoNoteData[]
   query?: string
   searchResults?: NoteSearchResult[]

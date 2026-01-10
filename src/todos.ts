@@ -1,4 +1,5 @@
 import type { Note } from './notes.js'
+import { TODO_DAYS_AHEAD } from './config/index.js'
 
 export interface TodoItem {
   dueDate: Date | null
@@ -86,7 +87,7 @@ function isWithinDateRange(todo: TodoItem, maxDate: Date): boolean {
 export function getNotesWithTodos(notes: Note[]): NoteWithTodos[] {
   const today = getDateOnly(new Date())
   const maxDate = new Date(today)
-  maxDate.setDate(maxDate.getDate() + 7)
+  maxDate.setDate(maxDate.getDate() + TODO_DAYS_AHEAD)
 
   const notesWithTodos: NoteWithTodos[] = []
 
