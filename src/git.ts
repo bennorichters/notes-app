@@ -71,6 +71,7 @@ export async function initGitRepository(): Promise<void> {
       console.log(`Initializing new git repository at ${NOTES_DIR}`)
       const git = simpleGit(NOTES_DIR)
       await git.init()
+      initGitConfig()
       console.log('Git repository initialized successfully')
     }
     return
@@ -95,6 +96,7 @@ export async function initGitRepository(): Promise<void> {
     const branch = await getDefaultBranch(NOTES_UPSTREAM)
     console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR} (branch: ${branch})...`)
     await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR, ['--branch', branch])
+    initGitConfig()
     console.log('Clone completed successfully')
   }
 }
