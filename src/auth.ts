@@ -1,10 +1,7 @@
 import type { Context, Next } from 'hono'
 import { getCookie } from 'hono/cookie'
 import { getSession } from './session.js'
-
-type Variables = {
-  userId: string
-}
+import type { Variables } from './types/index.js'
 
 const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
 

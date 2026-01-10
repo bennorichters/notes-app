@@ -15,40 +15,18 @@ import { EditNotePage } from './views/EditNotePage.js'
 import { NewNotePage } from './views/NewNotePage.js'
 import {
   getAllNotes,
-  getLastThreeModifiedNotes,
-  getPinnedNotes,
   getNoteByFilename,
   renderMarkdown,
   updateNote,
   createNote,
-  invalidateCache,
-  type Note
+  invalidateCache
 } from './notes.js'
 import { searchNotes, type NoteSearchResult } from './search.js'
-import { getNotesWithTodos } from './todos.js'
-
-type Variables = {
-  userId: string
-}
+import { buildHomePageData } from './services/homePageService.js'
+import type { Variables } from './types/index.js'
 
 const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
 const SEARCH_RESULTS_LIMIT = 5
-
-type NoteCardData = {
-  title: string
-  firstHeader: string
-  lastModified: Date
-  tags: string[]
-}
-
-function toNoteCardData(note: Note): NoteCardData {
-  return {
-    title: note.filename,
-    firstHeader: note.firstHeader,
-    lastModified: note.lastModified,
-    tags: note.tags
-  }
-}
 
 const app = new Hono<{ Variables: Variables }>()
 
@@ -266,23 +244,13 @@ app.post('/sync', requireAuth, async (c) => {
   } catch (error) {
     console.error('Sync failed:', error)
     const userId = c.get('userId') as string
-    const allNotes = await getAllNotes()
-    const lastNotes = allNotes.slice(0, 3)
-    const pinnedNotes = allNotes
-      .filter(note => note.isPinned)
-      .sort((a, b) => a.filename.localeCompare(b.filename))
-    const notesWithTodos = getNotesWithTodos(allNotes)
-    const todoNotes = notesWithTodos.map(nwt => ({
-      noteFilename: nwt.note.filename,
-      noteTitle: nwt.note.firstHeader,
-      todos: nwt.todos
-    }))
+    const { lastNotes, pinnedNotes, todoNotes } = await buildHomePageData()
     return c.html(
       <HomePage
         username={userId}
         showAuth={!SKIP_AUTH}
-        lastNotes={lastNotes.map(toNoteCardData)}
-        pinnedNotes={pinnedNotes.map(toNoteCardData)}
+        lastNotes={lastNotes}
+        pinnedNotes={pinnedNotes}
         todoNotes={todoNotes}
         error="Failed to sync from upstream"
       />
@@ -306,23 +274,13 @@ app.get('/', requireAuth, async (c) => {
       />
     )
   } else {
-    const allNotes = await getAllNotes()
-    const lastNotes = allNotes.slice(0, 3)
-    const pinnedNotes = allNotes
-      .filter(note => note.isPinned)
-      .sort((a, b) => a.filename.localeCompare(b.filename))
-    const notesWithTodos = getNotesWithTodos(allNotes)
-    const todoNotes = notesWithTodos.map(nwt => ({
-      noteFilename: nwt.note.filename,
-      noteTitle: nwt.note.firstHeader,
-      todos: nwt.todos
-    }))
+    const { lastNotes, pinnedNotes, todoNotes } = await buildHomePageData()
     return c.html(
       <HomePage
         username={userId}
         showAuth={!SKIP_AUTH}
-        lastNotes={lastNotes.map(toNoteCardData)}
-        pinnedNotes={pinnedNotes.map(toNoteCardData)}
+        lastNotes={lastNotes}
+        pinnedNotes={pinnedNotes}
         todoNotes={todoNotes}
       />
     )
