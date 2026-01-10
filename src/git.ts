@@ -24,8 +24,11 @@ async function isBareRepo(path: string): Promise<boolean> {
   try {
     const git = simpleGit(path)
     const result = await git.raw(['rev-parse', '--is-bare-repository'])
-    return result.trim() === 'true'
-  } catch {
+    const isBare = result.trim() === 'true'
+    console.log(`Bare repo check for ${path}: ${isBare}`)
+    return isBare
+  } catch (error) {
+    console.error(`Bare repo check failed for ${path}:`, error)
     return false
   }
 }
@@ -78,6 +81,7 @@ export async function initGitRepository(): Promise<void> {
   }
 
   const upstreamExists = await isDirectory(NOTES_UPSTREAM)
+  console.log(`Upstream directory check for ${NOTES_UPSTREAM}: ${upstreamExists}`)
   if (!upstreamExists) {
     throw new Error(`Upstream bare repository does not exist: ${NOTES_UPSTREAM}`)
   }
