@@ -56,7 +56,8 @@ export function parseTodoLine(line: string): TodoItem | null {
 }
 
 export function extractTodos(content: string): TodoItem[] {
-  const lines = content.split('\n')
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const lines = normalizedContent.split('\n')
   const todos: TodoItem[] = []
 
   for (const line of lines) {

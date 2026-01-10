@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTodoLine } from './todos.js'
+import { parseTodoLine, extractTodos } from './todos.js'
 
 describe('parseTodoLine', () => {
   it('parses a basic TODO line', () => {
@@ -101,5 +101,29 @@ describe('parseTodoLine', () => {
     expect(result!.dueDate!.getFullYear()).toBe(2026)
     expect(result!.dueDate!.getMonth()).toBe(0)
     expect(result!.dueDate!.getDate()).toBe(15)
+  })
+})
+
+describe('extractTodos', () => {
+  it('extracts TODOs from content with LF line endings', () => {
+    const content = '# Test\n\n- TODO[] 2026-01-10 Task one\n- TODO[] 2026-01-11 Task two\n'
+    const todos = extractTodos(content)
+    expect(todos).toHaveLength(2)
+    expect(todos[0].description).toBe('Task one')
+    expect(todos[1].description).toBe('Task two')
+  })
+
+  it('extracts TODOs from content with CRLF line endings', () => {
+    const content = '# Test\r\n\r\n- TODO[] 2026-01-10 Task one\r\n- TODO[] 2026-01-11 Task two\r\n'
+    const todos = extractTodos(content)
+    expect(todos).toHaveLength(2)
+    expect(todos[0].description).toBe('Task one')
+    expect(todos[1].description).toBe('Task two')
+  })
+
+  it('extracts TODOs from content with mixed line endings', () => {
+    const content = '# Test\r\n\n- TODO[] 2026-01-10 Task one\r\n- TODO[] 2026-01-11 Task two\n'
+    const todos = extractTodos(content)
+    expect(todos).toHaveLength(2)
   })
 })
