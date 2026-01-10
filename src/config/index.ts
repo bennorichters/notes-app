@@ -1,7 +1,13 @@
 export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+export const SESSION_CLEANUP_INTERVAL_MS = 60 * 60 * 1000
+export const SESSION_ID_BYTES = 32
 export const SEARCH_RESULTS_LIMIT = 5
 export const LAST_MODIFIED_NOTES_COUNT = 3
 export const CACHE_TTL_MS = 30 * 1000
+export const TODO_DAYS_AHEAD = 7
+export const NEW_NOTES_SUBDIR = 'new'
+export const GIT_USER_EMAIL = 'notes@app.local'
+export const GIT_USER_NAME = 'Notes App'
 
 export const USERNAME = process.env.USERNAME || 'admin'
 export const PASSWORD_HASH = process.env.PASSWORD_HASH || ''

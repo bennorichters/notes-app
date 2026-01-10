@@ -1,4 +1,9 @@
 import { randomBytes } from 'crypto'
+import {
+  SESSION_MAX_AGE_SECONDS,
+  SESSION_CLEANUP_INTERVAL_MS,
+  SESSION_ID_BYTES
+} from './config/index.js'
 
 interface Session {
   id: string
@@ -7,13 +12,12 @@ interface Session {
   expiresAt: Date
 }
 
-const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000
-const CLEANUP_INTERVAL_MS = 60 * 60 * 1000
+const SESSION_DURATION_MS = SESSION_MAX_AGE_SECONDS * 1000
 
 const sessions = new Map<string, Session>()
 
 export function createSession(userId: string): string {
-  const sessionId = randomBytes(32).toString('hex')
+  const sessionId = randomBytes(SESSION_ID_BYTES).toString('hex')
   const now = new Date()
   const expiresAt = new Date(now.getTime() + SESSION_DURATION_MS)
 
@@ -55,4 +59,4 @@ export function cleanExpiredSessions(): void {
   }
 }
 
-setInterval(cleanExpiredSessions, CLEANUP_INTERVAL_MS)
+setInterval(cleanExpiredSessions, SESSION_CLEANUP_INTERVAL_MS)

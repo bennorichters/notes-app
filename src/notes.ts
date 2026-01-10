@@ -2,7 +2,7 @@ import { readdir, readFile, writeFile, stat, mkdir } from 'fs/promises'
 import { join, relative } from 'path'
 import { getGit, queueCommitAndPush } from './git.js'
 import { extractFirstHeader, extractTags, renderMarkdown } from './markdown.js'
-import { NOTES_DIR, CACHE_TTL_MS } from './config/index.js'
+import { NOTES_DIR, CACHE_TTL_MS, NEW_NOTES_SUBDIR } from './config/index.js'
 
 export { renderMarkdown }
 
@@ -132,7 +132,7 @@ export async function updateNote(filename: string, content: string): Promise<voi
 }
 
 export async function createNote(content: string): Promise<string> {
-  const newDir = join(NOTES_DIR, 'new')
+  const newDir = join(NOTES_DIR, NEW_NOTES_SUBDIR)
 
   try {
     await mkdir(newDir, { recursive: true })
@@ -167,7 +167,7 @@ export async function createNote(content: string): Promise<string> {
   await writeFile(filePath, content, 'utf-8')
   invalidateCache()
 
-  queueCommitAndPush(`new/${filename}`, `Create ${filename}`)
+  queueCommitAndPush(`${NEW_NOTES_SUBDIR}/${filename}`, `Create ${filename}`)
 
   return filename.replace('.md', '')
 }

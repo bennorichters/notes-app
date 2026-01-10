@@ -2,11 +2,11 @@ import { simpleGit, type SimpleGit } from 'simple-git'
 import { execSync } from 'child_process'
 import { access, constants } from 'fs/promises'
 import { join } from 'path'
-import { NOTES_DIR } from './config/index.js'
+import { NOTES_DIR, GIT_USER_EMAIL, GIT_USER_NAME } from './config/index.js'
 
 execSync('git config --global safe.directory "*"')
-execSync('git config --global user.email "notes@app.local"')
-execSync('git config --global user.name "Notes App"')
+execSync(`git config --global user.email "${GIT_USER_EMAIL}"`)
+execSync(`git config --global user.name "${GIT_USER_NAME}"`)
 
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
 
