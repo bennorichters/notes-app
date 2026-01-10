@@ -9,3 +9,30 @@ export const TOTP_SECRET = process.env.TOTP_SECRET || ''
 export const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
 export const PORT = parseInt(process.env.PORT || '3000')
 export const NOTES_DIR = process.env.NOTES_DIR || './notes'
+
+export function validateConfig(): void {
+  const errors: string[] = []
+
+  if (!SKIP_AUTH) {
+    if (!PASSWORD_HASH) {
+      errors.push('PASSWORD_HASH environment variable is required when authentication is enabled')
+      errors.push('Generate one using: npx tsx scripts/hash-password.ts')
+    }
+
+    if (!TOTP_SECRET) {
+      errors.push('TOTP_SECRET environment variable is required when authentication is enabled')
+      errors.push('Generate one using: npx tsx scripts/setup-mfa.ts')
+    }
+  }
+
+  if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
+    errors.push(`PORT must be a valid port number (1-65535), got: ${process.env.PORT}`)
+  }
+
+  if (errors.length > 0) {
+    console.error('\n❌ Configuration validation failed:\n')
+    errors.forEach(error => console.error(`  - ${error}`))
+    console.error('\nPlease fix the configuration errors and restart the application.\n')
+    process.exit(1)
+  }
+}

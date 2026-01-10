@@ -7,7 +7,7 @@ import { registerAuthRoutes } from './routes/auth.js'
 import { registerNoteRoutes } from './routes/notes.js'
 import { registerHomeRoutes } from './routes/home.js'
 import type { Variables } from './types/index.js'
-import { PORT } from './config/index.js'
+import { PORT, validateConfig } from './config/index.js'
 
 const app = new Hono<{ Variables: Variables }>()
 
@@ -20,6 +20,8 @@ registerNoteRoutes(app)
 registerHomeRoutes(app)
 
 async function startServer() {
+  validateConfig()
+
   try {
     await initGitRepository()
   } catch (error) {
