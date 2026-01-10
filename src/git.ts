@@ -59,12 +59,13 @@ async function getDefaultBranch(bareRepoPath: string): Promise<string> {
 }
 
 export function initGitConfig(): void {
-  execSync('git config --global safe.directory "*"')
   execSync(`git -C "${NOTES_DIR}" config user.email "${GIT_USER_EMAIL}"`)
   execSync(`git -C "${NOTES_DIR}" config user.name "${GIT_USER_NAME}"`)
 }
 
 export async function initGitRepository(): Promise<void> {
+  execSync('git config --global safe.directory "*"')
+
   const localExists = await isGitRepo(NOTES_DIR)
 
   if (!NOTES_UPSTREAM) {
