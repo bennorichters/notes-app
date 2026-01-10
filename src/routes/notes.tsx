@@ -4,8 +4,10 @@ import { getNoteByFilename, renderMarkdown, updateNote, createNote } from '../no
 import { NewNotePage } from '../views/NewNotePage.js'
 import { NoteDetailPage } from '../views/NoteDetailPage.js'
 import { EditNotePage } from '../views/EditNotePage.js'
+import { ErrorPage } from '../views/ErrorPage.js'
 import type { Variables } from '../types/index.js'
 import { SKIP_AUTH } from '../config/index.js'
+import { logError } from '../logger.js'
 
 export function registerNoteRoutes(app: Hono<{ Variables: Variables }>) {
   app.get('/note/new', requireAuth, async (c) => {
@@ -38,6 +40,7 @@ export function registerNoteRoutes(app: Hono<{ Variables: Variables }>) {
       const filename = await createNote(content)
       return c.redirect(`/note/${filename}`)
     } catch (error) {
+      logError('createNote', error, { userId })
       return c.html(
         <NewNotePage
           username={userId}
@@ -55,7 +58,13 @@ export function registerNoteRoutes(app: Hono<{ Variables: Variables }>) {
     const note = await getNoteByFilename(filename)
 
     if (!note) {
-      return c.text('Note not found', 404)
+      return c.html(<ErrorPage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        title="Note Not Found"
+        message={`The note "${filename}" could not be found.`}
+        statusCode={404}
+      />, 404)
     }
 
     return c.html(
@@ -78,7 +87,13 @@ export function registerNoteRoutes(app: Hono<{ Variables: Variables }>) {
     const note = await getNoteByFilename(filename)
 
     if (!note) {
-      return c.text('Note not found', 404)
+      return c.html(<ErrorPage
+        username={userId}
+        showAuth={!SKIP_AUTH}
+        title="Note Not Found"
+        message={`The note "${filename}" could not be found.`}
+        statusCode={404}
+      />, 404)
     }
 
     return c.html(
@@ -103,7 +118,13 @@ export function registerNoteRoutes(app: Hono<{ Variables: Variables }>) {
     if (!content || content.trim() === '') {
       const note = await getNoteByFilename(filename)
       if (!note) {
-        return c.text('Note not found', 404)
+        return c.html(<ErrorPage
+          username={userId}
+          showAuth={!SKIP_AUTH}
+          title="Note Not Found"
+          message={`The note "${filename}" could not be found.`}
+          statusCode={404}
+        />, 404)
       }
       return c.html(
         <EditNotePage
@@ -123,9 +144,16 @@ export function registerNoteRoutes(app: Hono<{ Variables: Variables }>) {
       await updateNote(filename, content)
       return c.redirect(`/note/${filename}`)
     } catch (error) {
+      logError('updateNote', error, { userId, filename })
       const note = await getNoteByFilename(filename)
       if (!note) {
-        return c.text('Note not found', 404)
+        return c.html(<ErrorPage
+          username={userId}
+          showAuth={!SKIP_AUTH}
+          title="Note Not Found"
+          message={`The note "${filename}" could not be found.`}
+          statusCode={404}
+        />, 404)
       }
       return c.html(
         <EditNotePage

@@ -3,6 +3,7 @@ import { execSync } from 'child_process'
 import { access, constants } from 'fs/promises'
 import { join } from 'path'
 import { NOTES_DIR, GIT_USER_EMAIL, GIT_USER_NAME } from './config/index.js'
+import { logError, logWarning } from './logger.js'
 
 const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
 
@@ -114,7 +115,7 @@ async function processGitQueue() {
       try {
         await operation()
       } catch (error) {
-        console.error(`Git operation failed in queue from ${NOTES_DIR}:`, error)
+        logError('gitQueue', error, { notesDir: NOTES_DIR })
       }
     }
   }
