@@ -2,31 +2,12 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
-import { compare } from 'bcrypt'
-import { authenticator } from 'otplib'
-import { requireAuth } from './auth.js'
-import { createSession, deleteSession } from './session.js'
-import { initGitRepository, pullFromUpstream } from './git.js'
-import { LoginPage } from './views/LoginPage.js'
-import { HomePage } from './views/HomePage.js'
-import { NoteDetailPage } from './views/NoteDetailPage.js'
-import { EditNotePage } from './views/EditNotePage.js'
-import { NewNotePage } from './views/NewNotePage.js'
-import {
-  getAllNotes,
-  getNoteByFilename,
-  renderMarkdown,
-  updateNote,
-  createNote,
-  invalidateCache
-} from './notes.js'
-import { searchNotes, type NoteSearchResult } from './search.js'
-import { buildHomePageData } from './services/homePageService.js'
+import { initGitRepository } from './git.js'
+import { registerAuthRoutes } from './routes/auth.js'
+import { registerNoteRoutes } from './routes/notes.js'
+import { registerHomeRoutes } from './routes/home.js'
 import type { Variables } from './types/index.js'
-
-const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
-const SEARCH_RESULTS_LIMIT = 5
+import { PORT } from './config/index.js'
 
 const app = new Hono<{ Variables: Variables }>()
 
@@ -34,260 +15,9 @@ app.use('/*', serveStatic({ root: './public' }))
 
 app.get('/health', (c) => c.text('OK'))
 
-const USERNAME = process.env.USERNAME || 'admin'
-const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
-const TOTP_SECRET = process.env.TOTP_SECRET || ''
-const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
-
-app.get('/login', (c) => {
-  return c.html(<LoginPage />)
-})
-
-app.post('/login', async (c) => {
-  const body = await c.req.parseBody()
-  const username = body.username as string
-  const password = body.password as string
-  const totp = body.totp as string
-
-  if (!username || !password || !totp) {
-    return c.html(<LoginPage error="All fields are required" />)
-  }
-
-  if (username !== USERNAME) {
-    return c.html(<LoginPage error="Invalid credentials" />)
-  }
-
-  if (!PASSWORD_HASH) {
-    return c.html(<LoginPage error="Server configuration error" />)
-  }
-
-  const isValid = await compare(password, PASSWORD_HASH)
-
-  if (!isValid) {
-    return c.html(<LoginPage error="Invalid credentials" />)
-  }
-
-  if (!SKIP_AUTH) {
-    if (!TOTP_SECRET) {
-      return c.html(<LoginPage error="Server configuration error" />)
-    }
-
-    const isTotpValid = authenticator.verify({ token: totp, secret: TOTP_SECRET })
-
-    if (!isTotpValid) {
-      return c.html(<LoginPage error="Invalid credentials" />)
-    }
-  }
-
-  const sessionId = createSession(username)
-
-  setCookie(c, 'session', sessionId, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
-    maxAge: SESSION_MAX_AGE_SECONDS
-  })
-
-  return c.redirect('/')
-})
-
-app.get('/logout', (c) => {
-  const sessionId = getCookie(c, 'session')
-
-  if (sessionId) {
-    deleteSession(sessionId)
-  }
-
-  deleteCookie(c, 'session')
-  return c.redirect('/login')
-})
-
-app.get('/note/new', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  return c.html(
-    <NewNotePage
-      username={userId}
-      showAuth={!SKIP_AUTH}
-    />
-  )
-})
-
-app.post('/note/new', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  const body = await c.req.parseBody()
-  const content = body.content as string
-
-  if (!content || content.trim() === '') {
-    return c.html(
-      <NewNotePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        content={content}
-        error="Note content cannot be empty"
-      />
-    )
-  }
-
-  try {
-    const filename = await createNote(content)
-    return c.redirect(`/note/${filename}`)
-  } catch (error) {
-    return c.html(
-      <NewNotePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        content={content}
-        error={`Failed to create note: ${error instanceof Error ? error.message : 'Unknown error'}`}
-      />
-    )
-  }
-})
-
-app.get('/note/:filename', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  const filename = c.req.param('filename')
-  const note = await getNoteByFilename(filename)
-
-  if (!note) {
-    return c.text('Note not found', 404)
-  }
-
-  return c.html(
-    <NoteDetailPage
-      username={userId}
-      showAuth={!SKIP_AUTH}
-      note={{
-        title: note.filename,
-        firstHeader: note.firstHeader,
-        lastModified: note.lastModified,
-        renderedContent: renderMarkdown(note.content)
-      }}
-    />
-  )
-})
-
-app.get('/note/:filename/edit', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  const filename = c.req.param('filename')
-  const note = await getNoteByFilename(filename)
-
-  if (!note) {
-    return c.text('Note not found', 404)
-  }
-
-  return c.html(
-    <EditNotePage
-      username={userId}
-      showAuth={!SKIP_AUTH}
-      note={{
-        title: note.filename,
-        firstHeader: note.firstHeader,
-        content: note.content
-      }}
-    />
-  )
-})
-
-app.post('/note/:filename/edit', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  const filename = c.req.param('filename')
-  const body = await c.req.parseBody()
-  const content = body.content as string
-
-  if (!content || content.trim() === '') {
-    const note = await getNoteByFilename(filename)
-    if (!note) {
-      return c.text('Note not found', 404)
-    }
-    return c.html(
-      <EditNotePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        note={{
-          title: note.filename,
-          firstHeader: note.firstHeader,
-          content: note.content
-        }}
-        error="Note content cannot be empty"
-      />
-    )
-  }
-
-  try {
-    await updateNote(filename, content)
-    return c.redirect(`/note/${filename}`)
-  } catch (error) {
-    const note = await getNoteByFilename(filename)
-    if (!note) {
-      return c.text('Note not found', 404)
-    }
-    return c.html(
-      <EditNotePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        note={{
-          title: note.filename,
-          firstHeader: note.firstHeader,
-          content: content
-        }}
-        error={`Failed to save note: ${error instanceof Error ? error.message : 'Unknown error'}`}
-      />
-    )
-  }
-})
-
-app.post('/sync', requireAuth, async (c) => {
-  try {
-    await pullFromUpstream()
-    invalidateCache()
-    return c.redirect('/')
-  } catch (error) {
-    console.error('Sync failed:', error)
-    const userId = c.get('userId') as string
-    const { lastNotes, pinnedNotes, todoNotes } = await buildHomePageData()
-    return c.html(
-      <HomePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        lastNotes={lastNotes}
-        pinnedNotes={pinnedNotes}
-        todoNotes={todoNotes}
-        error="Failed to sync from upstream"
-      />
-    )
-  }
-})
-
-app.get('/', requireAuth, async (c) => {
-  const userId = c.get('userId') as string
-  const query = c.req.query('q') || ''
-
-  if (query.trim()) {
-    const allNotes = await getAllNotes()
-    const searchResults = searchNotes(allNotes, query, SEARCH_RESULTS_LIMIT)
-    return c.html(
-      <HomePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        query={query}
-        searchResults={searchResults}
-      />
-    )
-  } else {
-    const { lastNotes, pinnedNotes, todoNotes } = await buildHomePageData()
-    return c.html(
-      <HomePage
-        username={userId}
-        showAuth={!SKIP_AUTH}
-        lastNotes={lastNotes}
-        pinnedNotes={pinnedNotes}
-        todoNotes={todoNotes}
-      />
-    )
-  }
-})
-
-const port = parseInt(process.env.PORT || '3000')
+registerAuthRoutes(app)
+registerNoteRoutes(app)
+registerHomeRoutes(app)
 
 async function startServer() {
   try {
@@ -297,7 +27,7 @@ async function startServer() {
     process.exit(1)
   }
 
-  serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, (info) => {
+  serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0' }, (info) => {
     console.log(`Running on http://0.0.0.0:${info.port}`)
   })
 }
