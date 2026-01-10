@@ -175,6 +175,8 @@ npm start
 - Git config only set for newly created repositories (preserves existing config)
 - Git user for app-created repos: notes@app.local (Notes App)
 - Respects existing git credentials for manually cloned repositories
+- Safe.directory configured in production to handle Docker storage mount ownership
+- Storage mount ownership: /var/lib/dokku/data/storage/notes must be owned by app user (UID 32767)
 
 # Configuration
 
