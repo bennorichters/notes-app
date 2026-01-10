@@ -2,13 +2,22 @@ import type { FC } from 'hono/jsx'
 import { Layout } from '../components/Layout.js'
 import { Header } from '../components/Header.js'
 import { NoteCard } from '../components/NoteCard.js'
+import { TodoCard } from '../components/TodoCard.js'
 import type { NoteSearchResult } from '../search.js'
+import type { TodoItem } from '../todos.js'
+
+type TodoNoteData = {
+  noteFilename: string
+  noteTitle: string
+  todos: TodoItem[]
+}
 
 type HomePageProps = {
   username: string
   showAuth: boolean
   lastNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
   pinnedNotes?: { title: string; firstHeader: string; lastModified: Date; tags: string[] }[]
+  todoNotes?: TodoNoteData[]
   query?: string
   searchResults?: NoteSearchResult[]
   error?: string
@@ -19,6 +28,7 @@ export const HomePage: FC<HomePageProps> = ({
   showAuth,
   lastNotes,
   pinnedNotes,
+  todoNotes,
   query,
   searchResults,
   error
@@ -69,6 +79,18 @@ export const HomePage: FC<HomePageProps> = ({
           </>
         ) : (
           <>
+            {todoNotes && todoNotes.length > 0 && (
+              <>
+                <h2 class="section-title">TODO</h2>
+                {todoNotes.map((todoNote) => (
+                  <TodoCard
+                    noteFilename={todoNote.noteFilename}
+                    noteTitle={todoNote.noteTitle}
+                    todos={todoNote.todos}
+                  />
+                ))}
+              </>
+            )}
             {pinnedNotes && pinnedNotes.length > 0 && (
               <>
                 <h2 class="section-title">Pinned Notes</h2>

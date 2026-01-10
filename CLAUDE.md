@@ -16,6 +16,7 @@ MFA, and mobile-friendly design.
 - Full-text fuzzy search with Fuse.js
 - Tag-based search (colon-separated: :tag1:tag2:tag3:)
 - Note pinning via :pinned: tag
+- TODO tracking with due dates and color-coded status
 - Automatic git commit and push on create/update
 - Manual upstream sync with /sync endpoint
 - Username/password authentication with bcrypt
@@ -29,8 +30,10 @@ MFA, and mobile-friendly design.
 - Each file is a separate note in Markdown format
 - Filenames: YYYY-MM-DD_HH:MM:SS.md (auto-timestamped)
 - New notes created in notes/new/ subdirectory
+- Hidden folders (e.g., .git) are ignored when reading notes
 - Most notes end with colon-separated tags on last line
 - First header (H1-H6) used as note title
+- TODOs: `- TODO[] YYYY-MM-DD description` (see TODO Tracking section)
 - Less than 1000 files total
 - Total size: few MB
 
@@ -45,6 +48,9 @@ MFA, and mobile-friendly design.
 - **bcrypt** (v6.0.0) - Password hashing
 - **otplib** (v12.0.1) - TOTP MFA
 - **qrcode** (v1.5.4) - QR code generation
+
+## Dev Dependencies
+- **vitest** (v4.0.16) - Test framework
 
 ## Runtime
 - Node.js 24.12.0
@@ -63,10 +69,13 @@ MFA, and mobile-friendly design.
 │   ├── git.ts                 Git integration & queue
 │   ├── search.ts              Fuzzy search with Fuse.js
 │   ├── markdown.ts            Markdown parsing utilities
+│   ├── todos.ts               TODO parsing & filtering
+│   ├── todos.test.ts          Unit tests for TODO parsing
 │   ├── components/
 │   │   ├── Layout.tsx         HTML layout wrapper
 │   │   ├── Header.tsx         Page header with auth info
-│   │   └── NoteCard.tsx       Note list item component
+│   │   ├── NoteCard.tsx       Note list item component
+│   │   └── TodoCard.tsx       TODO list item component
 │   └── views/
 │       ├── LoginPage.tsx      Login form with MFA
 │       ├── HomePage.tsx       Dashboard with search
@@ -121,6 +130,11 @@ npx tsx scripts/hash-password.ts
 ## Setup MFA (optional)
 ```bash
 npx tsx scripts/setup-mfa.ts
+```
+
+## Run tests
+```bash
+npm test
 ```
 
 ## Build for production
@@ -183,3 +197,34 @@ npm start
 - Minimum search length: 2 characters
 - Result limit: 5 notes
 - Case-insensitive matching
+
+# TODO Tracking
+
+## Format
+```
+- TODO[] YYYY-MM-DD description
+- TODO[ ] YYYY-MM-DD description (space in brackets = not done)
+- TODO[x] YYYY-MM-DD description (any non-whitespace = done)
+```
+
+## Rules
+- TODOs can be indented (nested lists supported)
+- Flexible whitespace between components
+- Supports both LF and CRLF line endings
+- Invalid dates are shown in red (treated as overdue)
+
+## Display
+- TODO section appears on home page (above Pinned Notes)
+- Only shows pending TODOs (done TODOs are hidden)
+- Date range: all overdue + today + next 7 days
+- Section hidden if no TODOs in range
+
+## Date Colors
+- **Red**: overdue or invalid date
+- **Blue**: due today
+- **Green**: due within next 7 days
+
+## Sorting
+- Notes sorted by most urgent TODO
+- Within a note, TODOs sorted by due date
+- Invalid dates sort before valid dates

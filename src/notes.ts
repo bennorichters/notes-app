@@ -73,7 +73,11 @@ export async function getAllNotes(): Promise<Note[]> {
 
   try {
     const files = await readdir(NOTES_DIR, { recursive: true })
-    const mdFiles = files.filter(f => typeof f === 'string' && f.endsWith('.md'))
+    const mdFiles = files.filter(f => {
+      if (typeof f !== 'string' || !f.endsWith('.md')) return false
+      const segments = f.split('/')
+      return !segments.some(segment => segment.startsWith('.'))
+    })
     const git = getGit()
 
     const notes: Note[] = []

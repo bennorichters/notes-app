@@ -25,6 +25,7 @@ import {
   type Note
 } from './notes.js'
 import { searchNotes, type NoteSearchResult } from './search.js'
+import { getNotesWithTodos } from './todos.js'
 
 type Variables = {
   userId: string
@@ -265,14 +266,24 @@ app.post('/sync', requireAuth, async (c) => {
   } catch (error) {
     console.error('Sync failed:', error)
     const userId = c.get('userId') as string
-    const lastNotes = await getLastThreeModifiedNotes()
-    const pinnedNotes = await getPinnedNotes()
+    const allNotes = await getAllNotes()
+    const lastNotes = allNotes.slice(0, 3)
+    const pinnedNotes = allNotes
+      .filter(note => note.isPinned)
+      .sort((a, b) => a.filename.localeCompare(b.filename))
+    const notesWithTodos = getNotesWithTodos(allNotes)
+    const todoNotes = notesWithTodos.map(nwt => ({
+      noteFilename: nwt.note.filename,
+      noteTitle: nwt.note.firstHeader,
+      todos: nwt.todos
+    }))
     return c.html(
       <HomePage
         username={userId}
         showAuth={!SKIP_AUTH}
         lastNotes={lastNotes.map(toNoteCardData)}
         pinnedNotes={pinnedNotes.map(toNoteCardData)}
+        todoNotes={todoNotes}
         error="Failed to sync from upstream"
       />
     )
@@ -295,14 +306,24 @@ app.get('/', requireAuth, async (c) => {
       />
     )
   } else {
-    const lastNotes = await getLastThreeModifiedNotes()
-    const pinnedNotes = await getPinnedNotes()
+    const allNotes = await getAllNotes()
+    const lastNotes = allNotes.slice(0, 3)
+    const pinnedNotes = allNotes
+      .filter(note => note.isPinned)
+      .sort((a, b) => a.filename.localeCompare(b.filename))
+    const notesWithTodos = getNotesWithTodos(allNotes)
+    const todoNotes = notesWithTodos.map(nwt => ({
+      noteFilename: nwt.note.filename,
+      noteTitle: nwt.note.firstHeader,
+      todos: nwt.todos
+    }))
     return c.html(
       <HomePage
         username={userId}
         showAuth={!SKIP_AUTH}
         lastNotes={lastNotes.map(toNoteCardData)}
         pinnedNotes={pinnedNotes.map(toNoteCardData)}
+        todoNotes={todoNotes}
       />
     )
   }
