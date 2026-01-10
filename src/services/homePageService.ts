@@ -1,6 +1,7 @@
 import { getAllNotes, type Note } from '../notes.js'
 import { getNotesWithTodos } from '../todos.js'
 import type { NoteCardData, TodoNoteData } from '../types/index.js'
+import { LAST_MODIFIED_NOTES_COUNT } from '../config/index.js'
 
 export interface HomePageData {
   lastNotes: NoteCardData[]
@@ -19,7 +20,7 @@ function toNoteCardData(note: Note): NoteCardData {
 
 export async function buildHomePageData(): Promise<HomePageData> {
   const allNotes = await getAllNotes()
-  const lastNotes = allNotes.slice(0, 3)
+  const lastNotes = allNotes.slice(0, LAST_MODIFIED_NOTES_COUNT)
   const pinnedNotes = allNotes
     .filter(note => note.isPinned)
     .sort((a, b) => a.filename.localeCompare(b.filename))
