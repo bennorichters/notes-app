@@ -124,8 +124,10 @@ export async function initGitRepository(): Promise<void> {
       console.error(`   Directory owner UID: ${ownership.uid} (GID: ${ownership.gid})`)
     }
     console.error('\n   This will prevent git push operations from succeeding.')
-    console.error('   To fix this issue, ensure the upstream repository is owned by the app user:')
-    console.error(`   chown -R ${currentUid}:${currentUid} ${NOTES_UPSTREAM}`)
+    console.error('   To fix, configure the repository for shared access:')
+    console.error(`   chmod -R a+rwX ${NOTES_UPSTREAM}`)
+    console.error(`   find ${NOTES_UPSTREAM} -type d -exec chmod g+s {} \\;`)
+    console.error(`   git -C ${NOTES_UPSTREAM} config core.sharedRepository all`)
     console.error('')
     logWarning('initGitRepository', 'Upstream repository is not writable', {
       path: NOTES_UPSTREAM,
@@ -171,9 +173,12 @@ async function processGitQueue() {
 
         if (isPermissionError && NOTES_UPSTREAM) {
           console.error('\n❌ Git push failed due to permission error')
-          console.error('   This usually means the upstream repository is not writable.')
-          console.error(`   Please check ownership of: ${NOTES_UPSTREAM}`)
-          console.error('   Expected owner UID: ' + (process.getuid ? process.getuid() : 'unknown'))
+          console.error('   The upstream repository is not writable.')
+          console.error(`   Path: ${NOTES_UPSTREAM}`)
+          console.error('   To fix, configure the repository for shared access:')
+          console.error(`   chmod -R a+rwX ${NOTES_UPSTREAM}`)
+          console.error(`   find ${NOTES_UPSTREAM} -type d -exec chmod g+s {} \\;`)
+          console.error(`   git -C ${NOTES_UPSTREAM} config core.sharedRepository all`)
           console.error('')
         }
 

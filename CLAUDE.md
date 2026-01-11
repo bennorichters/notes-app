@@ -176,7 +176,12 @@ npm start
 - Git user for app-created repos: notes@app.local (Notes App)
 - Respects existing git credentials for manually cloned repositories
 - Safe.directory configured in production to handle Docker storage mount ownership
-- Storage mount ownership: /var/lib/dokku/data/storage/notes must be owned by app user (UID 32767)
+- Upstream bare repository must be configured for shared access (world-writable):
+  ```bash
+  chmod -R a+rwX /var/lib/dokku/data/storage/notes.git
+  find /var/lib/dokku/data/storage/notes.git -type d -exec chmod g+s {} \;
+  git -C /var/lib/dokku/data/storage/notes.git config core.sharedRepository all
+  ```
 
 # Configuration
 
