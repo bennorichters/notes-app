@@ -39,8 +39,24 @@ export const AddTodoButton: FC<AddTodoButtonProps> = ({ textareaId }) => {
             break;
           }
 
+          var countTrailingNewlines = function(str) {
+            var count = 0;
+            for (var i = str.length - 1; i >= 0 && str.charAt(i) === '\\n'; i--) {
+              count++;
+            }
+            return count;
+          };
+
+          var getPrefix = function(str) {
+            var trailing = countTrailingNewlines(str);
+            if (trailing >= 2) return '';
+            if (trailing === 1) return '\\n';
+            return '\\n\\n';
+          };
+
           if (tagLineIndex === -1) {
-            newContent = content + '\\n\\n' + todoLine;
+            var prefix = getPrefix(content);
+            newContent = content + prefix + todoLine;
             cursorPos = newContent.length;
           } else {
             var beforeTags = lines.slice(0, tagLineIndex).join('\\n');
@@ -50,8 +66,9 @@ export const AddTodoButton: FC<AddTodoButtonProps> = ({ textareaId }) => {
               newContent = todoLine + '\\n\\n' + tagLine;
               cursorPos = todoLine.length;
             } else {
-              newContent = beforeTags + '\\n\\n' + todoLine + '\\n\\n' + tagLine;
-              cursorPos = beforeTags.length + 2 + todoLine.length;
+              var prefix = getPrefix(beforeTags);
+              newContent = beforeTags + prefix + todoLine + '\\n\\n' + tagLine;
+              cursorPos = beforeTags.length + prefix.length + todoLine.length;
             }
           }
         }
