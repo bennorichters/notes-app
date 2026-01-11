@@ -6,6 +6,10 @@ import { NOTES_DIR, CACHE_TTL_MS, NEW_NOTES_SUBDIR } from './config/index.js'
 
 export { renderMarkdown }
 
+function normalizeLineEndings(content: string): string {
+  return content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+}
+
 export interface Note {
   filename: string
   path: string
@@ -124,7 +128,8 @@ export async function updateNote(filename: string, content: string): Promise<voi
     throw new Error(`Note not found: ${filename}`)
   }
 
-  await writeFile(note.path, content, 'utf-8')
+  const normalizedContent = normalizeLineEndings(content)
+  await writeFile(note.path, normalizedContent, 'utf-8')
   invalidateCache()
 
   const relativePath = relative(NOTES_DIR, note.path)
@@ -164,7 +169,8 @@ export async function createNote(content: string): Promise<string> {
     }
   }
 
-  await writeFile(filePath, content, 'utf-8')
+  const normalizedContent = normalizeLineEndings(content)
+  await writeFile(filePath, normalizedContent, 'utf-8')
   invalidateCache()
 
   queueCommitAndPush(`${NEW_NOTES_SUBDIR}/${filename}`, `Create ${filename}`)
