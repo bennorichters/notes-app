@@ -1,7 +1,7 @@
 import type { Hono } from 'hono'
 import { setCookie, deleteCookie, getCookie } from 'hono/cookie'
 import { compare } from 'bcrypt'
-import { authenticator } from 'otplib'
+import { verify as verifyTotp } from 'otplib'
 import { createSession, deleteSession } from '../session.js'
 import { LoginPage } from '../views/LoginPage.js'
 import type { Variables } from '../types/index.js'
@@ -47,9 +47,9 @@ export function registerAuthRoutes(app: Hono<{ Variables: Variables }>) {
         return c.html(<LoginPage error="Server configuration error" />)
       }
 
-      const isTotpValid = authenticator.verify({ token: totp, secret: TOTP_SECRET })
+      const totpResult = await verifyTotp({ token: totp, secret: TOTP_SECRET })
 
-      if (!isTotpValid) {
+      if (!totpResult.valid) {
         return c.html(<LoginPage error="Invalid credentials" />)
       }
     }

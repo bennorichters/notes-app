@@ -1,11 +1,11 @@
-import { authenticator } from 'otplib'
+import { generateSecret, generateURI } from 'otplib'
 import QRCode from 'qrcode'
 
-const secret = authenticator.generateSecret()
+const secret = generateSecret()
 const accountName = 'Notes App - bnor'
 const issuer = 'Notes App'
 
-const otpauth = authenticator.keyuri(accountName, issuer, secret)
+const otpauth = generateURI({ secret, accountName, issuer })
 
 console.log('\n=== MFA Setup ===\n')
 console.log('TOTP Secret:')
