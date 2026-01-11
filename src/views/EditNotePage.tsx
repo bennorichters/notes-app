@@ -1,6 +1,7 @@
 import type { FC } from 'hono/jsx'
 import { Layout } from '../components/Layout.js'
 import { Header } from '../components/Header.js'
+import { AddTodoButton } from '../components/AddTodoButton.js'
 
 type EditNotePageProps = {
   username: string
@@ -31,12 +32,14 @@ export const EditNotePage: FC<EditNotePageProps> = ({
         {error && <div class="error-message">{error}</div>}
         <form method="post" class="edit-form">
           <textarea
+            id="note-editor"
             name="content"
             class="note-editor"
             required
             autofocus
           >{note.content}</textarea>
           <div class="form-actions">
+            <AddTodoButton textareaId="note-editor" />
             <button type="submit" class="btn btn-primary">
               Save Changes
             </button>
