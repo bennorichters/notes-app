@@ -17,7 +17,7 @@ export const AddTodoButton: FC<AddTodoButtonProps> = ({ textareaId }) => {
         var month = String(tomorrow.getMonth() + 1).padStart(2, '0');
         var day = String(tomorrow.getDate()).padStart(2, '0');
         var dateStr = year + '-' + month + '-' + day;
-        var todoLine = '- TODO[ ] ' + dateStr;
+        var todoLine = '- TODO[ ] ' + dateStr + ' ';
 
         var content = textarea.value;
         var newContent;
