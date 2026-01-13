@@ -1,6 +1,7 @@
 import type { FC } from 'hono/jsx'
 import { Layout } from '../components/Layout.js'
 import { Header } from '../components/Header.js'
+import { formatDateTime } from '../format.js'
 
 type NoteDetailPageProps = {
   username: string
@@ -27,7 +28,7 @@ export const NoteDetailPage: FC<NoteDetailPageProps> = ({ username, showAuth, no
       </div>
       <div class="content">
         <div class="note-meta">
-          Modified: {note.lastModified.toLocaleString()} - {note.title}.md
+          Modified: {formatDateTime(note.lastModified)} - {note.title}.md
         </div>
         <div class="markdown-content" dangerouslySetInnerHTML={{ __html: note.renderedContent }} />
       </div>

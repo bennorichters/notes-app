@@ -1,4 +1,5 @@
 import type { FC } from 'hono/jsx'
+import { formatDateTime } from '../format.js'
 
 type NoteCardProps = {
   title: string
@@ -15,7 +16,7 @@ export const NoteCard: FC<NoteCardProps> = ({ title, firstHeader, lastModified, 
           {firstHeader}
         </div>
         <div class="note-subtitle">
-          Modified: {lastModified.toLocaleString()} - {title}.md
+          Modified: {formatDateTime(lastModified)} - {title}.md
         </div>
         {tags.length > 0 && (
           <div class="tag-list">
