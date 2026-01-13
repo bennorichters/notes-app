@@ -25,16 +25,6 @@ async function isGitRepo(path: string): Promise<boolean> {
   }
 }
 
-async function isDirectoryEmpty(path: string): Promise<boolean> {
-  try {
-    const git = simpleGit(path)
-    const status = await git.status()
-    return status.files.length === 0
-  } catch {
-    return true
-  }
-}
-
 export async function importGPGKey(): Promise<void> {
   try {
     execSync(`gpg --list-secret-keys ${GPG_KEY_ID}`, { stdio: 'pipe' })
@@ -71,16 +61,15 @@ export async function initGitRepository(): Promise<void> {
   await mkdir(NOTES_DIR, { recursive: true })
 
   const localExists = await isGitRepo(NOTES_DIR)
-  const isEmpty = await isDirectoryEmpty(NOTES_DIR)
 
-  if (localExists && !isEmpty) {
+  if (localExists) {
     console.log(`Local repository exists at ${NOTES_DIR}, pulling latest changes...`)
     const git = getGit()
     try {
       await git.pull('origin', 'main')
       console.log('Pull completed successfully')
     } catch (error) {
-      console.log('Pull failed (possibly first run), continuing...')
+      console.log('Pull failed (possibly first run or no remote), continuing...')
     }
   } else {
     console.log(`Cloning from encrypted GitHub repository...`)
@@ -88,18 +77,18 @@ export async function initGitRepository(): Promise<void> {
     try {
       await simpleGit().clone(gcryptUrl, NOTES_DIR)
       console.log('Clone completed successfully')
+      initGitConfig()
     } catch (error) {
       console.log('Clone failed (possibly empty repo), initializing new repository...')
       const git = simpleGit(NOTES_DIR)
       await git.init()
       await git.checkoutLocalBranch('main')
+      initGitConfig()
     }
-    initGitConfig()
   }
 
   const git = getGit()
   try {
-    await git.getRemotes()
     const remotes = await git.getRemotes()
     if (!remotes.find(r => r.name === 'origin')) {
       const gcryptUrl = `gcrypt::${GITHUB_REPO_URL}`
