@@ -36,6 +36,13 @@ async function isDirectoryEmpty(path: string): Promise<boolean> {
 }
 
 export async function importGPGKey(): Promise<void> {
+  try {
+    execSync(`gpg --list-secret-keys ${GPG_KEY_ID}`, { stdio: 'pipe' })
+    console.log('GPG key already exists in keyring, skipping import')
+    return
+  } catch {
+  }
+
   console.log('Importing GPG private key...')
   try {
     const keyData = Buffer.from(GPG_PRIVATE_KEY, 'base64').toString('utf-8')
