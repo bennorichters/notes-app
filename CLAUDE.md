@@ -165,8 +165,9 @@ npm start
 
 ## Dokku Configuration
 - **Process**: Single web process defined in Procfile
-- **Build**: npm run build (TypeScript → JavaScript)
-- **Start**: node dist/index.js
+- **Build**: Docker-based build with Dockerfile
+- **Container**: Node.js 24 slim with git-remote-gcrypt installed
+- **Start**: npm start (node dist/index.js)
 - **Health Check**: GET /health (3 attempts, 5s timeout)
 - **Storage**: Ephemeral (no mounted volumes)
 
