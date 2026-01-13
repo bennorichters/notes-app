@@ -1,33 +1,19 @@
 import { simpleGit, type SimpleGit } from 'simple-git'
 import { execSync } from 'child_process'
-import { access, constants, writeFile, unlink, stat } from 'fs/promises'
+import { access, constants, mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
-import { NOTES_DIR, GIT_USER_EMAIL, GIT_USER_NAME } from './config/index.js'
-import { logError, logWarning } from './logger.js'
-
-const NOTES_UPSTREAM = process.env.NOTES_UPSTREAM || ''
+import {
+  NOTES_DIR,
+  GIT_USER_EMAIL,
+  GIT_USER_NAME,
+  GPG_KEY_ID,
+  GITHUB_REPO_URL,
+  GPG_PRIVATE_KEY
+} from './config/index.js'
+import { logError } from './logger.js'
 
 export function getGit(): SimpleGit {
   return simpleGit(NOTES_DIR)
-}
-
-async function isDirectory(path: string): Promise<boolean> {
-  try {
-    await access(path, constants.R_OK)
-    return true
-  } catch {
-    return false
-  }
-}
-
-async function isBareRepo(path: string): Promise<boolean> {
-  try {
-    const git = simpleGit(path)
-    const result = await git.raw(['rev-parse', '--is-bare-repository'])
-    return result.trim() === 'true'
-  } catch {
-    return false
-  }
 }
 
 async function isGitRepo(path: string): Promise<boolean> {
@@ -39,39 +25,29 @@ async function isGitRepo(path: string): Promise<boolean> {
   }
 }
 
-async function getDefaultBranch(bareRepoPath: string): Promise<string> {
+async function isDirectoryEmpty(path: string): Promise<boolean> {
   try {
-    const git = simpleGit(bareRepoPath)
-    const result = await git.raw(['branch'])
-    const branches = result
-      .split('\n')
-      .map(b => b.replace('*', '').trim())
-      .filter(b => b.length > 0)
-    if (branches.includes('main')) return 'main'
-    if (branches.includes('master')) return 'master'
-    return branches[0] || 'main'
+    const git = simpleGit(path)
+    const status = await git.status()
+    return status.files.length === 0
   } catch {
-    return 'main'
-  }
-}
-
-async function checkUpstreamWritable(bareRepoPath: string): Promise<boolean> {
-  const testFile = join(bareRepoPath, '.write-test')
-  try {
-    await writeFile(testFile, 'test')
-    await unlink(testFile)
     return true
-  } catch (error) {
-    return false
   }
 }
 
-async function getPathOwnership(path: string): Promise<{ uid: number; gid: number } | null> {
+export async function importGPGKey(): Promise<void> {
+  console.log('Importing GPG private key...')
   try {
-    const stats = await stat(path)
-    return { uid: stats.uid, gid: stats.gid }
-  } catch {
-    return null
+    const keyData = Buffer.from(GPG_PRIVATE_KEY, 'base64').toString('utf-8')
+    const tempKeyFile = '/tmp/gpg-import-key.asc'
+    await writeFile(tempKeyFile, keyData)
+    execSync(`gpg --batch --import ${tempKeyFile}`, { stdio: 'pipe' })
+    execSync(`rm ${tempKeyFile}`)
+    execSync(`echo "${GPG_KEY_ID}:6:" | gpg --import-ownertrust`, { stdio: 'pipe' })
+    console.log('GPG key imported successfully')
+  } catch (error) {
+    console.error('Failed to import GPG key:', error)
+    throw error
   }
 }
 
@@ -83,71 +59,52 @@ export function initGitConfig(): void {
 export async function initGitRepository(): Promise<void> {
   if (process.env.NODE_ENV === 'production') {
     execSync(`git config --global --add safe.directory "${NOTES_DIR}"`)
-    if (NOTES_UPSTREAM) {
-      execSync(`git config --global --add safe.directory "${NOTES_UPSTREAM}"`)
-    }
   }
+
+  await mkdir(NOTES_DIR, { recursive: true })
 
   const localExists = await isGitRepo(NOTES_DIR)
+  const isEmpty = await isDirectoryEmpty(NOTES_DIR)
 
-  if (!NOTES_UPSTREAM) {
-    if (localExists) {
-      console.log(`Local repository exists at ${NOTES_DIR}, using it without upstream`)
-    } else {
-      console.log(`Initializing new git repository at ${NOTES_DIR}`)
-      const git = simpleGit(NOTES_DIR)
-      await git.init()
-      initGitConfig()
-      console.log('Git repository initialized successfully')
-    }
-    return
-  }
-
-  const upstreamExists = await isDirectory(NOTES_UPSTREAM)
-  if (!upstreamExists) {
-    throw new Error(`Upstream bare repository does not exist: ${NOTES_UPSTREAM}`)
-  }
-
-  const upstreamIsBare = await isBareRepo(NOTES_UPSTREAM)
-  if (!upstreamIsBare) {
-    throw new Error(`Upstream is not a bare repository: ${NOTES_UPSTREAM}`)
-  }
-
-  const isWritable = await checkUpstreamWritable(NOTES_UPSTREAM)
-  if (!isWritable) {
-    const ownership = await getPathOwnership(NOTES_UPSTREAM)
-    const currentUid = process.getuid ? process.getuid() : 'unknown'
-    console.error('\n❌ WARNING: Upstream repository is not writable')
-    console.error(`   Path: ${NOTES_UPSTREAM}`)
-    console.error(`   Current process UID: ${currentUid}`)
-    if (ownership) {
-      console.error(`   Directory owner UID: ${ownership.uid} (GID: ${ownership.gid})`)
-    }
-    console.error('\n   This will prevent git push operations from succeeding.')
-    console.error('   To fix, configure the repository for shared access:')
-    console.error(`   chmod -R a+rwX ${NOTES_UPSTREAM}`)
-    console.error(`   find ${NOTES_UPSTREAM} -type d -exec chmod g+s {} \\;`)
-    console.error(`   git -C ${NOTES_UPSTREAM} config core.sharedRepository all`)
-    console.error('')
-    logWarning('initGitRepository', 'Upstream repository is not writable', {
-      path: NOTES_UPSTREAM,
-      currentUid,
-      ownership
-    })
-  }
-
-  if (localExists) {
+  if (localExists && !isEmpty) {
     console.log(`Local repository exists at ${NOTES_DIR}, pulling latest changes...`)
     const git = getGit()
-    await git.pull()
-    console.log('Pull completed successfully')
+    try {
+      await git.pull('origin', 'main')
+      console.log('Pull completed successfully')
+    } catch (error) {
+      console.log('Pull failed (possibly first run), continuing...')
+    }
   } else {
-    const branch = await getDefaultBranch(NOTES_UPSTREAM)
-    console.log(`Cloning from ${NOTES_UPSTREAM} to ${NOTES_DIR} (branch: ${branch})...`)
-    await simpleGit().clone(NOTES_UPSTREAM, NOTES_DIR, ['--branch', branch])
+    console.log(`Cloning from encrypted GitHub repository...`)
+    const gcryptUrl = `gcrypt::${GITHUB_REPO_URL}`
+    try {
+      await simpleGit().clone(gcryptUrl, NOTES_DIR)
+      console.log('Clone completed successfully')
+    } catch (error) {
+      console.log('Clone failed (possibly empty repo), initializing new repository...')
+      const git = simpleGit(NOTES_DIR)
+      await git.init()
+      await git.checkoutLocalBranch('main')
+    }
     initGitConfig()
-    console.log('Clone completed successfully')
   }
+
+  const git = getGit()
+  try {
+    await git.getRemotes()
+    const remotes = await git.getRemotes()
+    if (!remotes.find(r => r.name === 'origin')) {
+      const gcryptUrl = `gcrypt::${GITHUB_REPO_URL}`
+      await git.addRemote('origin', gcryptUrl)
+    }
+  } catch {
+    const gcryptUrl = `gcrypt::${GITHUB_REPO_URL}`
+    await git.addRemote('origin', gcryptUrl)
+  }
+
+  execSync(`git -C "${NOTES_DIR}" config remote.origin.gcrypt-participants "${GPG_KEY_ID}"`)
+  console.log('Git repository initialized with encrypted remote')
 }
 
 const gitQueue: Array<() => Promise<void>> = []
@@ -166,26 +123,9 @@ async function processGitQueue() {
       try {
         await operation()
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-        const isPermissionError = errorMessage.includes('Permission denied') ||
-                                   errorMessage.includes('unable to write') ||
-                                   errorMessage.includes('unable to migrate objects')
-
-        if (isPermissionError && NOTES_UPSTREAM) {
-          console.error('\n❌ Git push failed due to permission error')
-          console.error('   The upstream repository is not writable.')
-          console.error(`   Path: ${NOTES_UPSTREAM}`)
-          console.error('   To fix, configure the repository for shared access:')
-          console.error(`   chmod -R a+rwX ${NOTES_UPSTREAM}`)
-          console.error(`   find ${NOTES_UPSTREAM} -type d -exec chmod g+s {} \\;`)
-          console.error(`   git -C ${NOTES_UPSTREAM} config core.sharedRepository all`)
-          console.error('')
-        }
-
         logError('gitQueue', error, {
           notesDir: NOTES_DIR,
-          notesUpstream: NOTES_UPSTREAM,
-          isPermissionError
+          githubRepoUrl: GITHUB_REPO_URL
         })
       }
     }
@@ -204,10 +144,13 @@ export async function commitAndPush(
   commitMessage: string
 ): Promise<void> {
   const git = getGit()
-  await git.pull()
+  try {
+    await git.pull('origin', 'main')
+  } catch {
+  }
   await git.add(relativePath)
   await git.commit(commitMessage)
-  await git.push()
+  await git.push('origin', 'main')
 }
 
 export function queueCommitAndPush(
@@ -221,5 +164,5 @@ export function queueCommitAndPush(
 
 export async function pullFromUpstream(): Promise<void> {
   const git = getGit()
-  await git.pull()
+  await git.pull('origin', 'main')
 }

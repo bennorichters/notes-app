@@ -14,7 +14,10 @@ export const PASSWORD_HASH = process.env.PASSWORD_HASH || ''
 export const TOTP_SECRET = process.env.TOTP_SECRET || ''
 export const SKIP_AUTH = process.env.SKIP_AUTH === 'true'
 export const PORT = parseInt(process.env.PORT || '3000')
-export const NOTES_DIR = process.env.NOTES_DIR || './notes'
+export const NOTES_DIR = process.env.NOTES_DIR || '/app/notes'
+export const GPG_KEY_ID = process.env.GPG_KEY_ID || ''
+export const GITHUB_REPO_URL = process.env.GITHUB_REPO_URL || ''
+export const GPG_PRIVATE_KEY = process.env.GPG_PRIVATE_KEY || ''
 
 export function validateConfig(): void {
   const errors: string[] = []
@@ -33,6 +36,21 @@ export function validateConfig(): void {
 
   if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
     errors.push(`PORT must be a valid port number (1-65535), got: ${process.env.PORT}`)
+  }
+
+  if (!GPG_KEY_ID) {
+    errors.push('GPG_KEY_ID environment variable is required')
+    errors.push('Set the GPG key ID used for git-remote-gcrypt encryption')
+  }
+
+  if (!GITHUB_REPO_URL) {
+    errors.push('GITHUB_REPO_URL environment variable is required')
+    errors.push('Set the GitHub repository URL (e.g., git@github.com:user/repo.git)')
+  }
+
+  if (!GPG_PRIVATE_KEY) {
+    errors.push('GPG_PRIVATE_KEY environment variable is required')
+    errors.push('Export your GPG private key as base64 and set it in this variable')
   }
 
   if (errors.length > 0) {

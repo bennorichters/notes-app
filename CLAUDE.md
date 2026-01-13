@@ -9,8 +9,9 @@ MFA, and mobile-friendly design.
 - Layered architecture: routes → services → data access
 - Centralized configuration with validation on startup
 - Runs on VPS as Dokku app
-- Git-backed storage at /var/lib/dokku/data/storage/notes
-- Supports bare git repositories for upstream sync
+- Ephemeral storage at /app/notes (rebuilt from GitHub on deploy)
+- Encrypted GitHub remote using git-remote-gcrypt
+- End-to-end encryption with GPG keys
 - 30-second cache with invalidation on changes
 - Queue-based git operations to prevent conflicts
 - Structured error logging with contextual information
@@ -115,11 +116,13 @@ MFA, and mobile-friendly design.
 Required:
 - **USERNAME** - Login username
 - **PASSWORD_HASH** - Bcrypt hash (use scripts/hash-password.ts)
+- **GPG_KEY_ID** - GPG key ID for git-remote-gcrypt encryption
+- **GITHUB_REPO_URL** - GitHub repository URL (SSH or HTTPS)
+- **GPG_PRIVATE_KEY** - Base64-encoded GPG private key
 
 Optional:
 - **TOTP_SECRET** - Base32 MFA secret (use scripts/setup-mfa.ts)
 - **NOTES_DIR** - Note storage path (default: /app/notes)
-- **NOTES_UPSTREAM** - Bare git repo path (optional, enables sync)
 - **SKIP_AUTH** - Set to "true" for local development bypass
 - **PORT** - Server port (default: 3000)
 - **NODE_ENV** - development or production
@@ -165,23 +168,18 @@ npm start
 - **Build**: npm run build (TypeScript → JavaScript)
 - **Start**: node dist/index.js
 - **Health Check**: GET /health (3 attempts, 5s timeout)
-- **Data Storage**: /var/lib/dokku/data/storage/notes
+- **Storage**: Ephemeral (no mounted volumes)
 
 ## Git Integration
-- Pull-before-push strategy prevents conflicts
-- Queue-based operations prevent race conditions
-- Graceful fallback if upstream unavailable
-- Auto-detects branch (main/master/first)
-- Git config only set for newly created repositories (preserves existing config)
-- Git user for app-created repos: notes@app.local (Notes App)
-- Respects existing git credentials for manually cloned repositories
-- Safe.directory configured in production to handle Docker storage mount ownership
-- Upstream bare repository must be configured for shared access (world-writable):
-  ```bash
-  chmod -R a+rwX /var/lib/dokku/data/storage/notes.git
-  find /var/lib/dokku/data/storage/notes.git -type d -exec chmod g+s {} \;
-  git -C /var/lib/dokku/data/storage/notes.git config core.sharedRepository all
-  ```
+- **Encryption**: git-remote-gcrypt with GPG keys
+- **Remote**: Encrypted GitHub repository (SSH or HTTPS)
+- **Storage**: Ephemeral /app/notes (cloned on startup)
+- **Startup**: GPG key imported from environment, repo cloned from GitHub
+- **Operations**: Pull-before-push strategy prevents conflicts
+- **Queue**: Queue-based operations prevent race conditions
+- **Commits**: Git user is notes@app.local (Notes App)
+- **Security**: GitHub sees only encrypted data (content + commit messages)
+- **Access**: Decrypt with GPG private key on laptop or VPS
 
 # Configuration
 
@@ -203,6 +201,9 @@ All configuration constants are centralized in `src/config/index.ts`:
 - Validates `PASSWORD_HASH` is set (when auth enabled)
 - Validates `TOTP_SECRET` is set (when auth enabled)
 - Validates `PORT` is a valid port number (1-65535)
+- Validates `GPG_KEY_ID` is set
+- Validates `GITHUB_REPO_URL` is set
+- Validates `GPG_PRIVATE_KEY` is set
 - Exits with clear error messages if validation fails
 - Provides instructions for fixing configuration errors
 
