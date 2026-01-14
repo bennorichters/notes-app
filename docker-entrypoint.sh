@@ -107,29 +107,45 @@ else
     git init
     git checkout -b master
   else
+    echo "DEBUG: Waiting for commits to be fetched (max 30 seconds)..."
+    cd "$NOTES_DIR"
+    WAIT_COUNT=0
+    HAS_COMMITS=0
+    while [ $WAIT_COUNT -lt 30 ]; do
+      if git rev-parse HEAD >/dev/null 2>&1; then
+        echo "DEBUG: Commits detected after ${WAIT_COUNT} seconds"
+        HAS_COMMITS=1
+        break
+      fi
+      sleep 1
+      WAIT_COUNT=$((WAIT_COUNT + 1))
+    done
+
     echo "DEBUG: Killing clone process to prevent hanging..."
     kill -9 $CLONE_PID 2>/dev/null || true
     wait $CLONE_PID 2>/dev/null || true
 
-    echo "DEBUG: Performing manual checkout..."
-    cd "$NOTES_DIR"
+    if [ $HAS_COMMITS -eq 1 ]; then
+      echo "DEBUG: Performing checkout..."
+      CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+      echo "DEBUG: Branch: $CURRENT_BRANCH"
 
-    echo "DEBUG: Getting branch name..."
-    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-    echo "DEBUG: Branch: $CURRENT_BRANCH"
+      git checkout -f "$CURRENT_BRANCH" 2>/dev/null || git checkout -f HEAD 2>/dev/null || true
 
-    echo "DEBUG: Forcing checkout..."
-    git checkout -f "$CURRENT_BRANCH" 2>/dev/null || git checkout -f master 2>/dev/null || git checkout -f HEAD 2>/dev/null || true
-
-    FILE_COUNT=$(find "$NOTES_DIR" -type f -not -path "$NOTES_DIR/.git/*" 2>/dev/null | wc -l)
-    if [ $FILE_COUNT -gt 0 ]; then
-      echo "Checkout completed successfully ($FILE_COUNT note files)"
+      FILE_COUNT=$(find "$NOTES_DIR" -type f -not -path "$NOTES_DIR/.git/*" 2>/dev/null | wc -l)
+      if [ $FILE_COUNT -gt 0 ]; then
+        echo "Checkout completed successfully ($FILE_COUNT note files)"
+      else
+        echo "WARNING: Checkout found no files"
+        echo "DEBUG: Directory contents:"
+        ls -la "$NOTES_DIR" 2>/dev/null | head -20 || echo "Cannot list directory"
+      fi
     else
-      echo "WARNING: Checkout found no files"
-      echo "DEBUG: Directory contents:"
-      ls -la "$NOTES_DIR" 2>/dev/null | head -20 || echo "Cannot list directory"
+      echo "WARNING: No commits found in repository"
+      echo "DEBUG: Clone log:"
+      tail -30 /tmp/git-clone.log 2>/dev/null || echo "No log available"
       echo "DEBUG: Git status:"
-      git status 2>&1 | head -10 || echo "Cannot get git status"
+      git status 2>&1 || echo "Cannot get git status"
     fi
   fi
 fi
