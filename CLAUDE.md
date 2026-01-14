@@ -80,7 +80,7 @@ MFA, and mobile-friendly design.
 │   ├── auth.ts                Authentication middleware
 │   ├── session.ts             Session management
 │   ├── notes.ts               Note operations & caching
-│   ├── git.ts                 Git integration & queue
+│   ├── git.ts                 Git operations & queue (no setup logic)
 │   ├── search.ts              Fuzzy search with Fuse.js
 │   ├── markdown.ts            Markdown parsing utilities
 │   ├── todos.ts               TODO parsing & filtering
@@ -104,6 +104,8 @@ MFA, and mobile-friendly design.
 ├── scripts/
 │   ├── hash-password.ts       Password hashing utility
 │   └── setup-mfa.ts           MFA setup with QR code
+├── docker-entrypoint.sh       Container startup script (git setup)
+├── Dockerfile                 Container image definition
 ├── package.json
 ├── tsconfig.json
 ├── app.json                   Dokku deployment config
@@ -167,15 +169,18 @@ npm start
 - **Process**: Single web process defined in Procfile
 - **Build**: Docker-based build with Dockerfile
 - **Container**: Node.js 24 slim with git-remote-gcrypt installed
-- **Start**: npm start (node dist/index.js)
+- **Entrypoint**: docker-entrypoint.sh handles infrastructure setup
+- **Start**: npm start (node dist/index.js) via entrypoint
 - **Health Check**: GET /health (3 attempts, 5s timeout)
 - **Storage**: Ephemeral (no mounted volumes)
 
 ## Git Integration
 - **Encryption**: git-remote-gcrypt with GPG keys
 - **Remote**: Encrypted GitHub repository (SSH or HTTPS)
-- **Storage**: Ephemeral /app/notes (cloned on startup)
-- **Startup**: GPG key imported from environment, repo cloned from GitHub
+- **Storage**: Ephemeral /app/notes (cloned via entrypoint before app starts)
+- **Entrypoint Script**: Handles GPG key import, SSH key install, repo clone/pull
+- **Safe Directory**: Configured in entrypoint to avoid ownership errors
+- **App Startup**: Verifies repo exists (fail-fast if missing)
 - **Operations**: Pull-before-push strategy prevents conflicts
 - **Queue**: Queue-based operations prevent race conditions
 - **Commits**: Git user is notes@app.local (Notes App)
