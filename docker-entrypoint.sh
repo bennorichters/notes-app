@@ -36,6 +36,12 @@ mkdir -p "$NOTES_DIR"
 echo "Configuring git safe.directory..."
 git config --global --add safe.directory "$NOTES_DIR"
 
+echo "Configuring GPG for non-interactive use..."
+export GPG_TTY=$(tty 2>/dev/null || echo "")
+export GNUPGHOME=${GNUPGHOME:-/root/.gnupg}
+echo "pinentry-mode loopback" >> $GNUPGHOME/gpg.conf 2>/dev/null || true
+echo "DEBUG: GPG configured for batch mode"
+
 set +e
 
 if [ -d "$NOTES_DIR/.git" ]; then
@@ -44,7 +50,7 @@ if [ -d "$NOTES_DIR/.git" ]; then
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
   echo "Current branch: $CURRENT_BRANCH"
 
-  if ! timeout 60 git pull origin "$CURRENT_BRANCH"; then
+  if ! GIT_TERMINAL_PROMPT=0 timeout 60 git pull origin "$CURRENT_BRANCH" < /dev/null; then
     echo "WARNING: Pull failed or timed out, continuing with existing local repo..."
   fi
 else
@@ -53,7 +59,7 @@ else
   GCRYPT_URL="gcrypt::${GITHUB_REPO_URL}"
 
   echo "DEBUG: About to execute: timeout 120 git clone $GCRYPT_URL $NOTES_DIR"
-  timeout 120 git clone "$GCRYPT_URL" "$NOTES_DIR"
+  GIT_TERMINAL_PROMPT=0 timeout 120 git clone "$GCRYPT_URL" "$NOTES_DIR" < /dev/null
   CLONE_EXIT=$?
   echo "DEBUG: Clone command finished with exit code: $CLONE_EXIT"
 
