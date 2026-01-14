@@ -82,20 +82,34 @@ else
   CLONE_PID=$!
   echo "DEBUG: Clone PID: $CLONE_PID"
 
-  echo "DEBUG: Waiting for repository to appear (max 60 seconds)..."
+  echo "DEBUG: Waiting for .git directory (max 30 seconds)..."
   WAIT_COUNT=0
-  while [ $WAIT_COUNT -lt 60 ]; do
-    if [ -d "$NOTES_DIR/.git" ] && [ -f "$NOTES_DIR/.git/config" ]; then
-      echo "DEBUG: Repository directory appeared after ${WAIT_COUNT} seconds"
+  while [ $WAIT_COUNT -lt 30 ]; do
+    if [ -d "$NOTES_DIR/.git" ]; then
+      echo "DEBUG: .git directory appeared after ${WAIT_COUNT} seconds"
       break
     fi
     sleep 1
     WAIT_COUNT=$((WAIT_COUNT + 1))
   done
 
-  echo "DEBUG: Checking if repository exists..."
-  if [ -d "$NOTES_DIR/.git" ] && [ -f "$NOTES_DIR/.git/config" ]; then
-    echo "Clone completed successfully (repository exists)"
+  echo "DEBUG: Waiting for working tree checkout (max 30 seconds)..."
+  WAIT_COUNT=0
+  FILE_COUNT=0
+  while [ $WAIT_COUNT -lt 30 ]; do
+    FILE_COUNT=$(find "$NOTES_DIR" -maxdepth 1 -type f 2>/dev/null | wc -l)
+    if [ $FILE_COUNT -gt 0 ]; then
+      echo "DEBUG: Working tree files appeared after ${WAIT_COUNT} seconds ($FILE_COUNT files)"
+      break
+    fi
+    sleep 1
+    WAIT_COUNT=$((WAIT_COUNT + 1))
+  done
+
+  echo "DEBUG: Checking if repository and files exist..."
+  FILE_COUNT=$(find "$NOTES_DIR" -maxdepth 1 -type f 2>/dev/null | wc -l)
+  if [ -d "$NOTES_DIR/.git" ] && [ $FILE_COUNT -gt 0 ]; then
+    echo "Clone completed successfully ($FILE_COUNT note files)"
     echo "DEBUG: Killing clone process if still running..."
     kill -9 $CLONE_PID 2>/dev/null || true
     wait $CLONE_PID 2>/dev/null || true
@@ -104,18 +118,32 @@ else
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
     echo "Cloned branch: $CURRENT_BRANCH"
   else
-    echo "ERROR: Clone failed - repository directory not found after 60s"
+    echo "ERROR: Clone failed - working tree files not found"
+    echo "DEBUG: .git exists: $([ -d "$NOTES_DIR/.git" ] && echo 'yes' || echo 'no')"
+    echo "DEBUG: File count: $FILE_COUNT"
     echo "DEBUG: Killing clone process..."
     kill -9 $CLONE_PID 2>/dev/null || true
     wait $CLONE_PID 2>/dev/null || true
     echo "DEBUG: Last lines of clone log:"
     tail -20 /tmp/git-clone.log 2>/dev/null || echo "No log available"
 
-    echo "Attempting to initialize new repository..."
-    mkdir -p "$NOTES_DIR"
-    cd "$NOTES_DIR"
-    git init
-    git checkout -b master
+    if [ -d "$NOTES_DIR/.git" ]; then
+      echo "Attempting to checkout working tree manually..."
+      cd "$NOTES_DIR"
+      git checkout -f HEAD 2>/dev/null || git checkout -f master 2>/dev/null || true
+      FILE_COUNT=$(find "$NOTES_DIR" -maxdepth 1 -type f 2>/dev/null | wc -l)
+      if [ $FILE_COUNT -gt 0 ]; then
+        echo "Manual checkout succeeded ($FILE_COUNT files)"
+      else
+        echo "WARNING: Manual checkout found no files"
+      fi
+    else
+      echo "Attempting to initialize new repository..."
+      mkdir -p "$NOTES_DIR"
+      cd "$NOTES_DIR"
+      git init
+      git checkout -b master
+    fi
   fi
 fi
 
