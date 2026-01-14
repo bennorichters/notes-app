@@ -52,13 +52,22 @@ else
   echo "Repository URL: ${GITHUB_REPO_URL}"
   GCRYPT_URL="gcrypt::${GITHUB_REPO_URL}"
 
-  if timeout 120 git clone "$GCRYPT_URL" "$NOTES_DIR"; then
+  echo "DEBUG: About to execute: timeout 120 git clone $GCRYPT_URL $NOTES_DIR"
+  timeout 120 git clone "$GCRYPT_URL" "$NOTES_DIR"
+  CLONE_EXIT=$?
+  echo "DEBUG: Clone command finished with exit code: $CLONE_EXIT"
+
+  if [ $CLONE_EXIT -eq 0 ]; then
     echo "Clone completed successfully"
-    cd "$NOTES_DIR"
-    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-    echo "Cloned branch: $CURRENT_BRANCH"
+    if cd "$NOTES_DIR"; then
+      echo "Changed to $NOTES_DIR"
+      CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+      echo "Cloned branch: $CURRENT_BRANCH"
+    else
+      echo "ERROR: Failed to cd to $NOTES_DIR"
+      exit 1
+    fi
   else
-    CLONE_EXIT=$?
     echo "ERROR: Clone failed with exit code $CLONE_EXIT"
     if [ $CLONE_EXIT -eq 124 ]; then
       echo "ERROR: Clone timed out after 120 seconds"
@@ -76,22 +85,36 @@ fi
 
 set -e
 
+echo "DEBUG: Re-enabled set -e, continuing with configuration..."
+
+cd "$NOTES_DIR" || exit 1
+echo "DEBUG: Working directory: $(pwd)"
+
 echo "Configuring git user..."
 git config user.email "${GIT_USER_EMAIL:-notes@app.local}"
 git config user.name "${GIT_USER_NAME:-Notes App}"
+echo "DEBUG: Git user configured"
 
-cd "$NOTES_DIR"
 REMOTES=$(git remote 2>/dev/null || echo "")
+echo "DEBUG: Existing remotes: '$REMOTES'"
+
 if ! echo "$REMOTES" | grep -q "^origin$"; then
   echo "Adding git remote origin..."
   GCRYPT_URL="gcrypt::${GITHUB_REPO_URL}"
   git remote add origin "$GCRYPT_URL"
+  echo "DEBUG: Remote added"
+else
+  echo "DEBUG: Remote origin already exists"
 fi
 
+echo "Configuring gcrypt participants..."
 git config remote.origin.gcrypt-participants "$GPG_KEY_ID"
+echo "DEBUG: Gcrypt participants configured"
 
 echo "=== Initialization complete ==="
+echo "DEBUG: About to start application..."
 echo ""
 
-cd /app
+cd /app || exit 1
+echo "DEBUG: Changed to /app, executing: $@"
 exec "$@"
