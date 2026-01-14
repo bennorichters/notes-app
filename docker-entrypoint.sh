@@ -11,6 +11,27 @@ if [ -z "$GPG_PRIVATE_KEY" ]; then
   exit 1
 fi
 
+echo "Configuring GPG for non-interactive/batch mode..."
+export GPG_TTY=$(tty 2>/dev/null || echo "")
+export GNUPGHOME=${GNUPGHOME:-/root/.gnupg}
+mkdir -p "$GNUPGHOME"
+chmod 700 "$GNUPGHOME"
+
+cat > "$GNUPGHOME/gpg.conf" <<EOF
+batch
+no-tty
+pinentry-mode loopback
+EOF
+
+cat > "$GNUPGHOME/gpg-agent.conf" <<EOF
+allow-loopback-pinentry
+default-cache-ttl 3600
+max-cache-ttl 7200
+EOF
+
+echo "DEBUG: GPG configured for batch mode"
+gpgconf --kill gpg-agent 2>/dev/null || true
+
 if gpg --list-secret-keys "$GPG_KEY_ID" >/dev/null 2>&1; then
   echo "GPG key already exists in keyring, skipping import"
 else
@@ -36,12 +57,6 @@ mkdir -p "$NOTES_DIR"
 echo "Configuring git safe.directory..."
 git config --global --add safe.directory "$NOTES_DIR"
 
-echo "Configuring GPG for non-interactive use..."
-export GPG_TTY=$(tty 2>/dev/null || echo "")
-export GNUPGHOME=${GNUPGHOME:-/root/.gnupg}
-echo "pinentry-mode loopback" >> $GNUPGHOME/gpg.conf 2>/dev/null || true
-echo "DEBUG: GPG configured for batch mode"
-
 set +e
 
 if [ -d "$NOTES_DIR/.git" ]; then
@@ -58,31 +73,29 @@ else
   echo "Repository URL: ${GITHUB_REPO_URL}"
   GCRYPT_URL="gcrypt::${GITHUB_REPO_URL}"
 
-  echo "DEBUG: About to execute: timeout 120 git clone $GCRYPT_URL $NOTES_DIR"
-  GIT_TERMINAL_PROMPT=0 timeout 120 git clone "$GCRYPT_URL" "$NOTES_DIR" < /dev/null
+  echo "DEBUG: Killing any running gpg-agent..."
+  gpgconf --kill gpg-agent 2>/dev/null || true
+  sleep 1
+
+  echo "DEBUG: About to execute git clone with 90 second timeout"
+  set +e
+  timeout -s KILL 90 git clone "$GCRYPT_URL" "$NOTES_DIR" </dev/null >/dev/null 2>&1
   CLONE_EXIT=$?
+  set -e
   echo "DEBUG: Clone command finished with exit code: $CLONE_EXIT"
 
-  if [ $CLONE_EXIT -eq 0 ]; then
-    echo "Clone completed successfully"
-    if cd "$NOTES_DIR"; then
-      echo "Changed to $NOTES_DIR"
-      CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-      echo "Cloned branch: $CURRENT_BRANCH"
-    else
-      echo "ERROR: Failed to cd to $NOTES_DIR"
-      exit 1
-    fi
+  if [ -d "$NOTES_DIR/.git" ] && [ -f "$NOTES_DIR/.git/config" ]; then
+    echo "Clone completed successfully (repository exists)"
+    cd "$NOTES_DIR"
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+    echo "Cloned branch: $CURRENT_BRANCH"
   else
-    echo "ERROR: Clone failed with exit code $CLONE_EXIT"
-    if [ $CLONE_EXIT -eq 124 ]; then
-      echo "ERROR: Clone timed out after 120 seconds"
-      echo "This usually means:"
-      echo "  - SSH/HTTPS authentication is failing"
-      echo "  - Network connectivity issues"
-      echo "  - GPG key issues with gcrypt"
+    echo "ERROR: Clone failed - repository directory not found"
+    if [ $CLONE_EXIT -eq 124 ] || [ $CLONE_EXIT -eq 137 ]; then
+      echo "ERROR: Clone timed out"
     fi
     echo "Attempting to initialize new repository..."
+    mkdir -p "$NOTES_DIR"
     cd "$NOTES_DIR"
     git init
     git checkout -b master
