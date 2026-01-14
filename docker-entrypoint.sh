@@ -77,23 +77,40 @@ else
   gpgconf --kill gpg-agent 2>/dev/null || true
   sleep 1
 
-  echo "DEBUG: About to execute git clone with 90 second timeout"
-  set +e
-  timeout -s KILL 90 git clone "$GCRYPT_URL" "$NOTES_DIR" </dev/null >/dev/null 2>&1
-  CLONE_EXIT=$?
-  set -e
-  echo "DEBUG: Clone command finished with exit code: $CLONE_EXIT"
+  echo "DEBUG: Starting git clone in background..."
+  git clone "$GCRYPT_URL" "$NOTES_DIR" </dev/null >/tmp/git-clone.log 2>&1 &
+  CLONE_PID=$!
+  echo "DEBUG: Clone PID: $CLONE_PID"
 
+  echo "DEBUG: Waiting for repository to appear (max 60 seconds)..."
+  WAIT_COUNT=0
+  while [ $WAIT_COUNT -lt 60 ]; do
+    if [ -d "$NOTES_DIR/.git" ] && [ -f "$NOTES_DIR/.git/config" ]; then
+      echo "DEBUG: Repository directory appeared after ${WAIT_COUNT} seconds"
+      break
+    fi
+    sleep 1
+    WAIT_COUNT=$((WAIT_COUNT + 1))
+  done
+
+  echo "DEBUG: Checking if repository exists..."
   if [ -d "$NOTES_DIR/.git" ] && [ -f "$NOTES_DIR/.git/config" ]; then
     echo "Clone completed successfully (repository exists)"
+    echo "DEBUG: Killing clone process if still running..."
+    kill -9 $CLONE_PID 2>/dev/null || true
+    wait $CLONE_PID 2>/dev/null || true
+
     cd "$NOTES_DIR"
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
     echo "Cloned branch: $CURRENT_BRANCH"
   else
-    echo "ERROR: Clone failed - repository directory not found"
-    if [ $CLONE_EXIT -eq 124 ] || [ $CLONE_EXIT -eq 137 ]; then
-      echo "ERROR: Clone timed out"
-    fi
+    echo "ERROR: Clone failed - repository directory not found after 60s"
+    echo "DEBUG: Killing clone process..."
+    kill -9 $CLONE_PID 2>/dev/null || true
+    wait $CLONE_PID 2>/dev/null || true
+    echo "DEBUG: Last lines of clone log:"
+    tail -20 /tmp/git-clone.log 2>/dev/null || echo "No log available"
+
     echo "Attempting to initialize new repository..."
     mkdir -p "$NOTES_DIR"
     cd "$NOTES_DIR"
