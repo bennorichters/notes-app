@@ -5,7 +5,14 @@ RUN apt-get update && apt-get install -y \
     gnupg \
     ca-certificates \
     curl \
+    openssh-client \
     && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts 2>/dev/null && \
+    chmod 644 /root/.ssh/known_hosts && \
+    mkdir -p /etc/ssh && \
+    ssh-keyscan github.com >> /etc/ssh/ssh_known_hosts 2>/dev/null
 
 RUN cd /tmp && \
     git clone https://github.com/spwhitton/git-remote-gcrypt && \
