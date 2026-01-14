@@ -20,8 +20,10 @@ export function getGit(): SimpleGit {
 async function isGitRepo(path: string): Promise<boolean> {
   try {
     await access(join(path, '.git'), constants.R_OK)
+    console.log(`'${path}' is a git repo`)
     return true
   } catch {
+    console.log(`'${path}' is NOT a git repo`)
     return false
   }
 }
@@ -176,6 +178,7 @@ export async function commitAndPush(
     console.log('Git: Pull skipped (no remote changes)')
   }
   await git.add(relativePath)
+  console.log(`Git: add "${relativePath}"`)
   await git.commit(commitMessage)
   console.log(`Git: Committed "${commitMessage}"`)
   await git.push('origin', currentBranch)
