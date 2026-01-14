@@ -168,13 +168,18 @@ export async function commitAndPush(
   const git = getGit()
   const status = await git.status()
   const currentBranch = status.current || 'master'
+  console.log(`Git: Committing and pushing ${relativePath}...`)
   try {
     await git.pull('origin', currentBranch, ['--rebase'])
-  } catch {
+    console.log('Git: Pulled latest changes from origin')
+  } catch (error) {
+    console.log('Git: Pull skipped (no remote changes)')
   }
   await git.add(relativePath)
   await git.commit(commitMessage)
+  console.log(`Git: Committed "${commitMessage}"`)
   await git.push('origin', currentBranch)
+  console.log(`Git: Pushed to origin/${currentBranch}`)
 }
 
 export function queueCommitAndPush(
@@ -190,5 +195,7 @@ export async function pullFromUpstream(): Promise<void> {
   const git = getGit()
   const status = await git.status()
   const currentBranch = status.current || 'master'
+  console.log(`Git: Synchronizing from origin/${currentBranch}...`)
   await git.pull('origin', currentBranch, ['--rebase'])
+  console.log('Git: Synchronization complete')
 }
