@@ -86,15 +86,9 @@ export async function initGitRepository(): Promise<void> {
     const git = getGit()
     try {
       const status = await git.status()
-      if (status.current !== 'main') {
-        console.log(`Current branch is ${status.current}, switching to main...`)
-        try {
-          await git.checkout('main')
-        } catch {
-          await git.checkoutLocalBranch('main')
-        }
-      }
-      await git.pull('origin', 'main')
+      const currentBranch = status.current || 'master'
+      console.log(`Current branch: ${currentBranch}`)
+      await git.pull('origin', currentBranch)
       console.log('Pull completed successfully')
     } catch (error) {
       console.log('Pull failed (possibly first run or no remote), continuing...')
@@ -109,19 +103,12 @@ export async function initGitRepository(): Promise<void> {
 
       const git = getGit()
       const status = await git.status()
-      if (status.current !== 'main') {
-        console.log(`Cloned with branch ${status.current}, switching to main...`)
-        try {
-          await git.checkout('main')
-        } catch {
-          await git.checkoutLocalBranch('main')
-        }
-      }
+      console.log(`Cloned branch: ${status.current}`)
     } catch (error) {
       console.log('Clone failed (possibly empty repo), initializing new repository...')
       const git = simpleGit(NOTES_DIR)
       await git.init()
-      await git.checkoutLocalBranch('main')
+      await git.checkoutLocalBranch('master')
       initGitConfig()
     }
   }
@@ -179,13 +166,15 @@ export async function commitAndPush(
   commitMessage: string
 ): Promise<void> {
   const git = getGit()
+  const status = await git.status()
+  const currentBranch = status.current || 'master'
   try {
-    await git.pull('origin', 'main')
+    await git.pull('origin', currentBranch)
   } catch {
   }
   await git.add(relativePath)
   await git.commit(commitMessage)
-  await git.push('origin', 'main')
+  await git.push('origin', currentBranch)
 }
 
 export function queueCommitAndPush(
@@ -199,5 +188,7 @@ export function queueCommitAndPush(
 
 export async function pullFromUpstream(): Promise<void> {
   const git = getGit()
-  await git.pull('origin', 'main')
+  const status = await git.status()
+  const currentBranch = status.current || 'master'
+  await git.pull('origin', currentBranch)
 }
