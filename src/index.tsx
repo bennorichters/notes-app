@@ -20,6 +20,7 @@ registerNoteRoutes(app)
 registerHomeRoutes(app)
 
 async function startServer() {
+  console.log("Start server")
   validateConfig()
 
   try {
