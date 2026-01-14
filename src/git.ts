@@ -1,7 +1,6 @@
 import { simpleGit, type SimpleGit } from 'simple-git'
 import { execSync } from 'child_process'
-import { access, constants, mkdir, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { mkdir, writeFile } from 'fs/promises'
 import {
   NOTES_DIR,
   GIT_USER_EMAIL,
@@ -19,11 +18,16 @@ export function getGit(): SimpleGit {
 
 async function isGitRepo(path: string): Promise<boolean> {
   try {
-    await access(join(path, '.git'), constants.R_OK)
-    console.log(`'${path}' is a git repo`)
-    return true
-  } catch {
-    console.log(`'${path}' is NOT a git repo`)
+    const git = simpleGit(path)
+    const isRepo = await git.checkIsRepo()
+    if (isRepo) {
+      console.log(`'${path}' is a git repo`)
+    } else {
+      console.log(`'${path}' is NOT a git repo`)
+    }
+    return isRepo
+  } catch (error) {
+    console.log(`'${path}' is NOT a git repo (error: ${error})`)
     return false
   }
 }
