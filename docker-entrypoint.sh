@@ -2,6 +2,8 @@
 set -e
 
 echo "=== Starting container initialization ==="
+echo "DEBUG: GITHUB_REPO_URL is set: $([ -n "$GITHUB_REPO_URL" ] && echo 'yes' || echo 'no')"
+echo "DEBUG: GPG_KEY_ID: $GPG_KEY_ID"
 
 echo "Importing GPG private key..."
 if [ -z "$GPG_PRIVATE_KEY" ]; then
@@ -34,28 +36,45 @@ mkdir -p "$NOTES_DIR"
 echo "Configuring git safe.directory..."
 git config --global --add safe.directory "$NOTES_DIR"
 
+set +e
+
 if [ -d "$NOTES_DIR/.git" ]; then
   echo "Local repository exists at $NOTES_DIR, pulling latest changes..."
   cd "$NOTES_DIR"
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
   echo "Current branch: $CURRENT_BRANCH"
-  git pull origin "$CURRENT_BRANCH" 2>/dev/null || echo "Pull failed or no remote changes"
+
+  if ! timeout 60 git pull origin "$CURRENT_BRANCH"; then
+    echo "WARNING: Pull failed or timed out, continuing with existing local repo..."
+  fi
 else
   echo "Cloning from encrypted GitHub repository..."
+  echo "Repository URL: ${GITHUB_REPO_URL}"
   GCRYPT_URL="gcrypt::${GITHUB_REPO_URL}"
 
-  if git clone "$GCRYPT_URL" "$NOTES_DIR" 2>/dev/null; then
+  if timeout 120 git clone "$GCRYPT_URL" "$NOTES_DIR"; then
     echo "Clone completed successfully"
     cd "$NOTES_DIR"
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
     echo "Cloned branch: $CURRENT_BRANCH"
   else
-    echo "Clone failed (possibly empty repo), initializing new repository..."
+    CLONE_EXIT=$?
+    echo "ERROR: Clone failed with exit code $CLONE_EXIT"
+    if [ $CLONE_EXIT -eq 124 ]; then
+      echo "ERROR: Clone timed out after 120 seconds"
+      echo "This usually means:"
+      echo "  - SSH/HTTPS authentication is failing"
+      echo "  - Network connectivity issues"
+      echo "  - GPG key issues with gcrypt"
+    fi
+    echo "Attempting to initialize new repository..."
     cd "$NOTES_DIR"
     git init
     git checkout -b master
   fi
 fi
+
+set -e
 
 echo "Configuring git user..."
 git config user.email "${GIT_USER_EMAIL:-notes@app.local}"
