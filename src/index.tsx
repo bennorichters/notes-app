@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import { importGPGKey, initGitRepository } from './git.js'
+import { importGPGKey, installSSHKey, initGitRepository } from './git.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerNoteRoutes } from './routes/notes.js'
 import { registerHomeRoutes } from './routes/home.js'
@@ -24,6 +24,7 @@ async function startServer() {
 
   try {
     await importGPGKey()
+    await installSSHKey()
     await initGitRepository()
   } catch (error) {
     console.error('Failed to initialize:', error)

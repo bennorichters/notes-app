@@ -8,7 +8,8 @@ import {
   GIT_USER_NAME,
   GPG_KEY_ID,
   GITHUB_REPO_URL,
-  GPG_PRIVATE_KEY
+  GPG_PRIVATE_KEY,
+  SSH_PRIVATE_KEY
 } from './config/index.js'
 import { logError } from './logger.js'
 
@@ -44,6 +45,24 @@ export async function importGPGKey(): Promise<void> {
     console.log('GPG key imported successfully')
   } catch (error) {
     console.error('Failed to import GPG key:', error)
+    throw error
+  }
+}
+
+export async function installSSHKey(): Promise<void> {
+  console.log('Installing SSH private key...')
+  try {
+    const keyData = Buffer.from(SSH_PRIVATE_KEY, 'base64').toString('utf-8')
+    const sshDir = '/root/.ssh'
+    const keyFile = `${sshDir}/id_ed25519`
+
+    await mkdir(sshDir, { recursive: true })
+    await writeFile(keyFile, keyData)
+    execSync(`chmod 600 ${keyFile}`)
+    execSync(`chmod 700 ${sshDir}`)
+    console.log('SSH key installed successfully')
+  } catch (error) {
+    console.error('Failed to install SSH key:', error)
     throw error
   }
 }

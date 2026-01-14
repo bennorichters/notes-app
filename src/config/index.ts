@@ -18,6 +18,7 @@ export const NOTES_DIR = process.env.NOTES_DIR || '/app/notes'
 export const GPG_KEY_ID = process.env.GPG_KEY_ID || ''
 export const GITHUB_REPO_URL = process.env.GITHUB_REPO_URL || ''
 export const GPG_PRIVATE_KEY = process.env.GPG_PRIVATE_KEY || ''
+export const SSH_PRIVATE_KEY = process.env.SSH_PRIVATE_KEY || ''
 
 export function validateConfig(): void {
   const errors: string[] = []
@@ -51,6 +52,11 @@ export function validateConfig(): void {
   if (!GPG_PRIVATE_KEY) {
     errors.push('GPG_PRIVATE_KEY environment variable is required')
     errors.push('Export your GPG private key as base64 and set it in this variable')
+  }
+
+  if (!SSH_PRIVATE_KEY) {
+    errors.push('SSH_PRIVATE_KEY environment variable is required')
+    errors.push('Export your SSH deploy key as base64 and set it in this variable')
   }
 
   if (errors.length > 0) {
