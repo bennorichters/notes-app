@@ -107,15 +107,19 @@ else
     git init
     git checkout -b master
   else
-    echo "DEBUG: Waiting for commits to be fetched (max 30 seconds)..."
+    echo "DEBUG: Waiting for objects to be fetched (max 30 seconds)..."
     cd "$NOTES_DIR"
     WAIT_COUNT=0
-    HAS_COMMITS=0
+    HAS_OBJECTS=0
     while [ $WAIT_COUNT -lt 30 ]; do
-      if git rev-parse HEAD >/dev/null 2>&1; then
-        echo "DEBUG: Commits detected after ${WAIT_COUNT} seconds"
-        HAS_COMMITS=1
+      OBJECT_COUNT=$(find "$NOTES_DIR/.git/objects" -type f 2>/dev/null | wc -l)
+      if [ $OBJECT_COUNT -gt 10 ]; then
+        echo "DEBUG: Git objects detected after ${WAIT_COUNT} seconds ($OBJECT_COUNT objects)"
+        HAS_OBJECTS=1
         break
+      fi
+      if [ $WAIT_COUNT -eq 10 ] || [ $WAIT_COUNT -eq 20 ]; then
+        echo "DEBUG: Still waiting, objects so far: $OBJECT_COUNT"
       fi
       sleep 1
       WAIT_COUNT=$((WAIT_COUNT + 1))
@@ -125,12 +129,19 @@ else
     kill -9 $CLONE_PID 2>/dev/null || true
     wait $CLONE_PID 2>/dev/null || true
 
-    if [ $HAS_COMMITS -eq 1 ]; then
+    if [ $HAS_OBJECTS -eq 1 ]; then
       echo "DEBUG: Performing checkout..."
-      CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
-      echo "DEBUG: Branch: $CURRENT_BRANCH"
 
-      git checkout -f "$CURRENT_BRANCH" 2>/dev/null || git checkout -f HEAD 2>/dev/null || true
+      CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+      if [ -z "$CURRENT_BRANCH" ] || [ "$CURRENT_BRANCH" = "HEAD" ]; then
+        echo "DEBUG: HEAD not set, trying to find default branch..."
+        CURRENT_BRANCH=$(git branch -r 2>/dev/null | grep origin/HEAD | sed 's/.*-> origin\///' || echo "master")
+        echo "DEBUG: Using branch: $CURRENT_BRANCH"
+      else
+        echo "DEBUG: Branch: $CURRENT_BRANCH"
+      fi
+
+      git checkout -f "$CURRENT_BRANCH" 2>/dev/null || git checkout -f master 2>/dev/null || git checkout -f HEAD 2>/dev/null || true
 
       FILE_COUNT=$(find "$NOTES_DIR" -type f -not -path "$NOTES_DIR/.git/*" 2>/dev/null | wc -l)
       if [ $FILE_COUNT -gt 0 ]; then
@@ -139,9 +150,11 @@ else
         echo "WARNING: Checkout found no files"
         echo "DEBUG: Directory contents:"
         ls -la "$NOTES_DIR" 2>/dev/null | head -20 || echo "Cannot list directory"
+        echo "DEBUG: Available branches:"
+        git branch -a 2>&1 | head -10 || echo "Cannot list branches"
       fi
     else
-      echo "WARNING: No commits found in repository"
+      echo "WARNING: No git objects found in repository"
       echo "DEBUG: Clone log:"
       tail -30 /tmp/git-clone.log 2>/dev/null || echo "No log available"
       echo "DEBUG: Git status:"
