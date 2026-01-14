@@ -169,7 +169,7 @@ export async function commitAndPush(
   const status = await git.status()
   const currentBranch = status.current || 'master'
   try {
-    await git.pull('origin', currentBranch)
+    await git.pull('origin', currentBranch, ['--rebase'])
   } catch {
   }
   await git.add(relativePath)
@@ -190,5 +190,5 @@ export async function pullFromUpstream(): Promise<void> {
   const git = getGit()
   const status = await git.status()
   const currentBranch = status.current || 'master'
-  await git.pull('origin', currentBranch)
+  await git.pull('origin', currentBranch, ['--rebase'])
 }
