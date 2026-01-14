@@ -2,12 +2,12 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import { importGPGKey, installSSHKey, initGitRepository } from './git.js'
+import { getGit } from './git.js'
 import { registerAuthRoutes } from './routes/auth.js'
 import { registerNoteRoutes } from './routes/notes.js'
 import { registerHomeRoutes } from './routes/home.js'
 import type { Variables } from './types/index.js'
-import { PORT, validateConfig } from './config/index.js'
+import { PORT, NOTES_DIR, validateConfig } from './config/index.js'
 
 const app = new Hono<{ Variables: Variables }>()
 
@@ -24,11 +24,13 @@ async function startServer() {
   validateConfig()
 
   try {
-    await importGPGKey()
-    await installSSHKey()
-    await initGitRepository()
+    const git = getGit()
+    await git.checkIsRepo()
+    console.log(`Git repository verified at ${NOTES_DIR}`)
   } catch (error) {
-    console.error('Failed to initialize:', error)
+    console.error(`FATAL: ${NOTES_DIR} is not a git repository`)
+    console.error('The docker-entrypoint.sh should have initialized this.')
+    console.error('Error:', error)
     process.exit(1)
   }
 
