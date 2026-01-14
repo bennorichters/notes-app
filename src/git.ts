@@ -66,6 +66,15 @@ export async function initGitRepository(): Promise<void> {
     console.log(`Local repository exists at ${NOTES_DIR}, pulling latest changes...`)
     const git = getGit()
     try {
+      const status = await git.status()
+      if (status.current !== 'main') {
+        console.log(`Current branch is ${status.current}, switching to main...`)
+        try {
+          await git.checkout('main')
+        } catch {
+          await git.checkoutLocalBranch('main')
+        }
+      }
       await git.pull('origin', 'main')
       console.log('Pull completed successfully')
     } catch (error) {
@@ -78,6 +87,17 @@ export async function initGitRepository(): Promise<void> {
       await simpleGit().clone(gcryptUrl, NOTES_DIR)
       console.log('Clone completed successfully')
       initGitConfig()
+
+      const git = getGit()
+      const status = await git.status()
+      if (status.current !== 'main') {
+        console.log(`Cloned with branch ${status.current}, switching to main...`)
+        try {
+          await git.checkout('main')
+        } catch {
+          await git.checkoutLocalBranch('main')
+        }
+      }
     } catch (error) {
       console.log('Clone failed (possibly empty repo), initializing new repository...')
       const git = simpleGit(NOTES_DIR)
