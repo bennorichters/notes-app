@@ -178,7 +178,7 @@ npm start
 - **Encryption**: git-remote-gcrypt with GPG keys
 - **Remote**: Encrypted GitHub repository (SSH or HTTPS)
 - **Storage**: Ephemeral /app/notes (cloned via entrypoint before app starts)
-- **Entrypoint Script**: Handles GPG key import, SSH key install, repo clone/pull
+- **Entrypoint Script**: Handles GPG key import, SSH key install, repo clone/pull, git user config
 - **Safe Directory**: Configured in entrypoint to avoid ownership errors
 - **App Startup**: Verifies repo exists (fail-fast if missing)
 - **Operations**: Pull-before-push strategy prevents conflicts
@@ -200,8 +200,6 @@ All configuration constants are centralized in `src/config/index.ts`:
 - `CACHE_TTL_MS`: 30 seconds cache time-to-live
 - `TODO_DAYS_AHEAD`: 7 days ahead for TODO filtering
 - `NEW_NOTES_SUBDIR`: 'new' subdirectory for new notes
-- `GIT_USER_EMAIL`: 'notes@app.local' for git commits
-- `GIT_USER_NAME`: 'Notes App' for git commits
 
 ## Validation on Startup
 - Validates `PASSWORD_HASH` is set (when auth enabled)
