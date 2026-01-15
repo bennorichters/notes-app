@@ -1,42 +1,27 @@
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
-# SSH setup (required for GitHub auth)
-if [ -n "${SSH_PRIVATE_KEY:-}" ]; then
-  mkdir -p /root/.ssh
-  echo "$SSH_PRIVATE_KEY" | base64 -d > /root/.ssh/id_ed25519
-  chmod 600 /root/.ssh/id_ed25519
-  ssh-keyscan -t ed25519 github.com >> /root/.ssh/known_hosts 2>/dev/null
-fi
+# Required environment variables
+: "${GITHUB_REPO_URL:?}"
+: "${SSH_PRIVATE_KEY:?}"
+: "${GPG_PRIVATE_KEY:?}"
+: "${NOTES_DIR:?}"
 
-# GPG setup (required for gcrypt)
-export GNUPGHOME="${GNUPGHOME:-/root/.gnupg}"
-mkdir -p "$GNUPGHOME"
-chmod 700 "$GNUPGHOME"
+# Temp SSH key
+SSH_KEY_FILE="$(mktemp)"
+cleanup() {
+  rm -f "$SSH_KEY_FILE"
+}
+trap cleanup EXIT
 
-cat > "$GNUPGHOME/gpg.conf" <<EOF
-batch
-no-tty
-pinentry-mode loopback
-EOF
+# Setup SSH key
+printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY_FILE"
+chmod 600 "$SSH_KEY_FILE"
+export GIT_SSH_COMMAND="ssh -i $SSH_KEY_FILE -o StrictHostKeyChecking=no"
 
-echo "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
-echo "$GPG_KEY_ID:6:" | gpg --import-ownertrust
+# Import GPG private key (base64-encoded)
+printf '%s' "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
 
-# Repo setup
-NOTES_DIR="${NOTES_DIR:-/app/notes}"
-mkdir -p "$NOTES_DIR"
-git config --global --add safe.directory "$NOTES_DIR"
+# Clone using git-remote-gcrypt
+git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
 
-if [ -d "$NOTES_DIR/.git" ]; then
-  git -C "$NOTES_DIR" pull --ff-only || true
-else
-  timeout 120 git clone "gcrypt::${GITHUB_REPO_URL}" "$NOTES_DIR"
-fi
-
-# Configure
-git -C "$NOTES_DIR" config user.email "${GIT_USER_EMAIL:-notes@app.local}"
-git -C "$NOTES_DIR" config user.name "${GIT_USER_NAME:-Notes App}"
-git -C "$NOTES_DIR" config remote.origin.gcrypt-participants "$GPG_KEY_ID"
-
-exec "$@"
