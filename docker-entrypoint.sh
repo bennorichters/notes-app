@@ -29,7 +29,7 @@ git config --global remote.gcrypt.helper /usr/local/bin/git-remote-gcrypt
 git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
 
 if [ $# -eq 0 ]; then
-  exec npm start
+  exec node dist/index.js
 else
   exec "$@"
 fi
