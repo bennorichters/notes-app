@@ -10,7 +10,7 @@
         "path": "/health",
         "attempts": 3,
         "timeout": 5,
-        "wait": 5
+        "wait": 30
       }
     ]
   }
