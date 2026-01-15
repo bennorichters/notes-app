@@ -28,12 +28,13 @@ git config --global remote.gcrypt.helper /usr/local/bin/git-remote-gcrypt
 # Clone repository using git-remote-gcrypt
 git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
 
-echo "DEBUG: Number of args: $#"
-echo "DEBUG: Args: $@"
+touch /tmp/reached_after_clone
+echo "DEBUG: Number of args: $#" >&2
+echo "DEBUG: Args: $@" >&2
 if [ $# -eq 0 ]; then
-  echo "DEBUG: No args, running npm start"
+  echo "DEBUG: No args, running npm start" >&2
   exec npm start
 else
-  echo "DEBUG: Running: $@"
+  echo "DEBUG: Running: $@" >&2
   exec "$@"
 fi
