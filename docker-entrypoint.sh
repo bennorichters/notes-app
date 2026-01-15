@@ -26,3 +26,5 @@ printf '%s' "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
 # Clone via gcrypt
 git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
 
+exec "$@"
+
