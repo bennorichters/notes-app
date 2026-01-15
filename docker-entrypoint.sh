@@ -28,4 +28,8 @@ git config --global remote.gcrypt.helper /usr/local/bin/git-remote-gcrypt
 # Clone repository using git-remote-gcrypt
 git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
 
-exec "$@"
+if [ $# -eq 0 ]; then
+  exec npm start
+else
+  exec "$@"
+fi
