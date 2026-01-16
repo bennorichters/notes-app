@@ -17,8 +17,10 @@ printf '%s' "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import 2>/dev/null ||
 
 git config --global remote.gcrypt.helper /usr/local/bin/git-remote-gcrypt
 
-cd "$NOTES_DIR"
-git pull origin master || true
-cd /app
+if [ -d "$NOTES_DIR" ]; then
+  cd "$NOTES_DIR"
+  git pull origin master || true
+  cd /app
+fi
 
 exec "$@"
