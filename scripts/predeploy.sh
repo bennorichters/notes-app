@@ -20,3 +20,6 @@ printf '%s' "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import
 git config --global remote.gcrypt.helper /usr/local/bin/git-remote-gcrypt
 
 git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
+
+git -C "$NOTES_DIR" config user.email "notes@app.local"
+git -C "$NOTES_DIR" config user.name "Notes App"
