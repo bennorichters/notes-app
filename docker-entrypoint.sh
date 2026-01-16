@@ -17,15 +17,11 @@ printf '%s' "$GPG_PRIVATE_KEY" | base64 -d | gpg --batch --import 2>/dev/null ||
 
 git config --global remote.gcrypt.helper /usr/local/bin/git-remote-gcrypt
 
-<<<<<<< HEAD
-# Clone repository using git-remote-gcrypt
-git clone "gcrypt::$GITHUB_REPO_URL" "$NOTES_DIR"
-git -C "$NOTES_DIR" config user.email "notes@app.local"
-git -C "$NOTES_DIR" config user.name "Notes App"
-=======
-cd "$NOTES_DIR"
-git pull origin master || true
-cd /app
->>>>>>> claude/analyze-dokku-deployment-4YEBd
+if [ -d "$NOTES_DIR" ]; then
+  cd "$NOTES_DIR"
+  git pull origin master || true
+  cd /app
+fi
 
 exec "$@"
+
