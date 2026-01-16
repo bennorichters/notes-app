@@ -3,7 +3,7 @@
   "description": "A simple notes application",
   "scripts": {
     "dokku": {
-      "predeploy": "/usr/local/bin/docker-entrypoint.sh clone"
+      "predeploy": "/usr/local/bin/predeploy.sh"
     }
   },
   "healthchecks": {

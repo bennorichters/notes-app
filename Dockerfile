@@ -32,7 +32,8 @@ RUN npm run build
 RUN npm prune --production
 
 COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY scripts/predeploy.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/predeploy.sh
 
 EXPOSE 3000
 
