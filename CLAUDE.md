@@ -103,7 +103,8 @@ MFA, and mobile-friendly design.
 │   └── favicon.svg
 ├── scripts/
 │   ├── hash-password.ts       Password hashing utility
-│   └── setup-mfa.ts           MFA setup with QR code
+│   ├── setup-mfa.ts           MFA setup with QR code
+│   └── predeploy.sh           Dokku predeploy script (git clone)
 ├── docker-entrypoint.sh       Container startup script (git setup)
 ├── Dockerfile                 Container image definition
 ├── package.json
@@ -169,17 +170,18 @@ npm start
 - **Process**: Single web process defined in Procfile
 - **Build**: Docker-based build with Dockerfile
 - **Container**: Node.js 24 slim with git-remote-gcrypt installed
-- **Entrypoint**: docker-entrypoint.sh handles infrastructure setup
+- **Predeploy**: scripts/predeploy.sh clones repo (committed to image)
+- **Entrypoint**: docker-entrypoint.sh does git pull and starts app
 - **Start**: npm start (node dist/index.js) via entrypoint
-- **Health Check**: GET /health (3 attempts, 5s timeout)
+- **Health Check**: GET /health (3 attempts, 5s timeout, 5s wait)
 - **Storage**: Ephemeral (no mounted volumes)
 
 ## Git Integration
 - **Encryption**: git-remote-gcrypt with GPG keys
 - **Remote**: Encrypted GitHub repository (SSH or HTTPS)
-- **Storage**: Ephemeral /app/notes (cloned via entrypoint before app starts)
-- **Entrypoint Script**: Handles GPG key import, SSH key install, repo clone/pull, git user config
-- **Safe Directory**: Configured in entrypoint to avoid ownership errors
+- **Storage**: Ephemeral /app/notes (cloned during predeploy, committed to image)
+- **Predeploy Script**: Handles GPG key import, SSH key install, repo clone
+- **Entrypoint Script**: Handles GPG key import, SSH key install, git pull
 - **App Startup**: Verifies repo exists (fail-fast if missing)
 - **Operations**: Pull-before-push strategy prevents conflicts
 - **Queue**: Queue-based operations prevent race conditions
