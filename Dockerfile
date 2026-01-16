@@ -31,11 +31,11 @@ RUN npm run build
 
 RUN npm prune --production
 
-COPY docker-entrypoint.sh /usr/local/bin/
 COPY scripts/predeploy.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/predeploy.sh
+RUN chmod +x /usr/local/bin/predeploy.sh
+
+ENV GIT_SSH_COMMAND="ssh -i /root/.ssh/id_rsa -o StrictHostKeyChecking=no"
 
 EXPOSE 3000
 
-ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["npm", "start"]
